@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "ROLL — Finance Behind the Frame"
+description = "A cinematic production finance workspace for film and commercial teams. ROLL helps producers manage budgets, contracts, expenses, payments, cash flow, and decision impact before approving changes."
+version = "1.0.0"
+id = "artifacts/roll-finance"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23406
+
+[services.development]
+run = "pnpm --filter @workspace/roll-finance run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/roll-finance", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/roll-finance/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23406"
+BASE_PATH = "/"

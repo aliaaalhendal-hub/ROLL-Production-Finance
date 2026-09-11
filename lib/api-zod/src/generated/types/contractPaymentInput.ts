@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
+export interface ContractPaymentInput {
+  label: string;
+  /** @minimum 0 */
+  amount: number;
+  dueDate: Date;
   status: string;
 }

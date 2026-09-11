@@ -5,7 +5,9 @@
  * ROLL production finance API
  * OpenAPI spec version: 0.1.0
  */
+import type { DecisionSimulation } from './decisionSimulation';
 
-export interface HealthStatus {
+export type Decision = DecisionSimulation & {
   status: string;
-}
+  createdAt: Date;
+};

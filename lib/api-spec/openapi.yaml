@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: ROLL production finance API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: projects
+    description: Production workspaces
+  - name: finance
+    description: Production finance operations
 paths:
   /healthz:
     get:
@@ -24,7 +28,526 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List the signed-in user's productions
+      responses:
+        "200":
+          description: Productions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a production
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+      responses:
+        "201":
+          description: Created production
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+  /projects/{projectId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get a production
+      responses:
+        "200":
+          description: Production
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update a production
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdate"
+      responses:
+        "200":
+          description: Updated production
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete a production
+      responses:
+        "204":
+          description: Deleted
+  /projects/{projectId}/dashboard:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: getProjectDashboard
+      tags: [finance]
+      summary: Get an at-a-glance financial dashboard
+      responses:
+        "200":
+          description: Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /projects/{projectId}/budgets:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: listBudgets
+      tags: [finance]
+      summary: List department budgets
+      responses:
+        "200":
+          description: Department budgets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Budget"
+    post:
+      operationId: createBudget
+      tags: [finance]
+      summary: Add a department budget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetInput"
+      responses:
+        "201":
+          description: Created budget
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Budget"
+  /projects/{projectId}/budgets/{budgetId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/BudgetId"
+    patch:
+      operationId: updateBudget
+      tags: [finance]
+      summary: Update a department budget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetUpdate"
+      responses:
+        "200":
+          description: Updated budget
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Budget"
+  /projects/{projectId}/expenses:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: listExpenses
+      tags: [finance]
+      summary: List production expenses
+      responses:
+        "200":
+          description: Expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Expense"
+    post:
+      operationId: createExpense
+      tags: [finance]
+      summary: Add a production expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseInput"
+      responses:
+        "201":
+          description: Created expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+  /projects/{projectId}/expenses/{expenseId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/ExpenseId"
+    patch:
+      operationId: updateExpense
+      tags: [finance]
+      summary: Update an expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseUpdate"
+      responses:
+        "200":
+          description: Updated expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+  /projects/{projectId}/contracts:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: listContracts
+      tags: [finance]
+      summary: List production contracts
+      responses:
+        "200":
+          description: Contracts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contract"
+    post:
+      operationId: createContract
+      tags: [finance]
+      summary: Add a production contract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractInput"
+      responses:
+        "201":
+          description: Created contract
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+  /projects/{projectId}/contracts/{contractId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/ContractId"
+    patch:
+      operationId: updateContract
+      tags: [finance]
+      summary: Update a production contract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractUpdate"
+      responses:
+        "200":
+          description: Updated contract
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+  /projects/{projectId}/payment-requests:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: listPaymentRequests
+      tags: [finance]
+      summary: List payment requests
+      responses:
+        "200":
+          description: Payment requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentRequest"
+    post:
+      operationId: createPaymentRequest
+      tags: [finance]
+      summary: Create a payment request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentRequestInput"
+      responses:
+        "201":
+          description: Created payment request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentRequest"
+  /projects/{projectId}/payment-requests/{requestId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/RequestId"
+    patch:
+      operationId: updatePaymentRequest
+      tags: [finance]
+      summary: Update a payment request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentRequestUpdate"
+      responses:
+        "200":
+          description: Updated payment request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentRequest"
+  /projects/{projectId}/payments:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: listPayments
+      tags: [finance]
+      summary: List payments
+      responses:
+        "200":
+          description: Payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+    post:
+      operationId: createPayment
+      tags: [finance]
+      summary: Create a test-mode payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentInput"
+      responses:
+        "201":
+          description: Created payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+  /projects/{projectId}/payments/{paymentId}/process:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/PaymentId"
+    post:
+      operationId: processPayment
+      tags: [finance]
+      summary: Process a test-mode payment
+      responses:
+        "200":
+          description: Processed payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+  /projects/{projectId}/assets:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: listAssets
+      tags: [finance]
+      summary: List production assets
+      responses:
+        "200":
+          description: Assets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Asset"
+    post:
+      operationId: createAsset
+      tags: [finance]
+      summary: Add a production asset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssetInput"
+      responses:
+        "201":
+          description: Created asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+  /projects/{projectId}/decisions/simulate:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    post:
+      operationId: simulateDecision
+      tags: [finance]
+      summary: Simulate a production decision without changing project data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionInput"
+      responses:
+        "200":
+          description: Decision simulation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionSimulation"
+  /projects/{projectId}/decisions/{decisionId}/approve:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/DecisionId"
+    post:
+      operationId: approveDecision
+      tags: [finance]
+      summary: Approve a simulated decision
+      responses:
+        "200":
+          description: Approved decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Decision"
+  /projects/{projectId}/decisions/{decisionId}/reject:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/DecisionId"
+    post:
+      operationId: rejectDecision
+      tags: [finance]
+      summary: Reject a simulated decision
+      responses:
+        "200":
+          description: Rejected decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Decision"
+  /projects/{projectId}/cash-flow:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: getCashFlow
+      tags: [finance]
+      summary: Get the production cash-flow timeline
+      responses:
+        "200":
+          description: Cash flow
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CashFlowEntry"
+  /projects/{projectId}/activities:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: listActivities
+      tags: [finance]
+      summary: Get project activity history
+      responses:
+        "200":
+          description: Activity history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+  /projects/{projectId}/health:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: getFinancialHealth
+      tags: [finance]
+      summary: Get the current financial health score
+      responses:
+        "200":
+          description: Financial health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialHealth"
 components:
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: string
+    BudgetId:
+      name: budgetId
+      in: path
+      required: true
+      schema:
+        type: string
+    ExpenseId:
+      name: expenseId
+      in: path
+      required: true
+      schema:
+        type: string
+    ContractId:
+      name: contractId
+      in: path
+      required: true
+      schema:
+        type: string
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      schema:
+        type: string
+    PaymentId:
+      name: paymentId
+      in: path
+      required: true
+      schema:
+        type: string
+    DecisionId:
+      name: decisionId
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +556,373 @@ components:
           type: string
       required:
         - status
+    Project:
+      type: object
+      required: [id, name, type, location, currency, startDate, endDate, totalBudget, status, productionDays]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        location: { type: string }
+        currency: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        totalBudget: { type: number }
+        status: { type: string }
+        productionDays: { type: integer }
+        imageUrl: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+    ProjectInput:
+      type: object
+      required: [name, type, location, currency, startDate, endDate, totalBudget, status, productionDays]
+      properties:
+        name: { type: string, minLength: 1 }
+        type: { type: string }
+        location: { type: string }
+        currency: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        totalBudget: { type: number, minimum: 0 }
+        status: { type: string }
+        productionDays: { type: integer, minimum: 1 }
+        imageUrl: { type: ["string", "null"] }
+    ProjectUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        type: { type: string }
+        location: { type: string }
+        currency: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        totalBudget: { type: number, minimum: 0 }
+        status: { type: string }
+        productionDays: { type: integer, minimum: 1 }
+        imageUrl: { type: ["string", "null"] }
+    Dashboard:
+      type: object
+      required: [project, totals, budgets, insights, upcomingPayments, productionProgress]
+      properties:
+        project: { $ref: "#/components/schemas/Project" }
+        totals: { $ref: "#/components/schemas/FinancialTotals" }
+        budgets:
+          type: array
+          items: { $ref: "#/components/schemas/Budget" }
+        insights:
+          type: array
+          items: { $ref: "#/components/schemas/Insight" }
+        upcomingPayments:
+          type: array
+          items: { $ref: "#/components/schemas/UpcomingPayment" }
+        productionProgress: { $ref: "#/components/schemas/ProductionProgress" }
+    FinancialTotals:
+      type: object
+      required: [totalBudget, spent, committed, actuallyAvailable, forecastFinalCost]
+      properties:
+        totalBudget: { type: number }
+        spent: { type: number }
+        committed: { type: number }
+        actuallyAvailable: { type: number }
+        forecastFinalCost: { type: number }
+    Budget:
+      type: object
+      required: [id, department, allocated, paid, committed, remaining, forecast]
+      properties:
+        id: { type: string }
+        department: { type: string }
+        allocated: { type: number }
+        paid: { type: number }
+        committed: { type: number }
+        remaining: { type: number }
+        forecast: { type: number }
+    BudgetInput:
+      type: object
+      required: [department, allocated]
+      properties:
+        department: { type: string }
+        allocated: { type: number, minimum: 0 }
+    BudgetUpdate:
+      type: object
+      properties:
+        department: { type: string }
+        allocated: { type: number, minimum: 0 }
+    Expense:
+      type: object
+      required: [id, title, department, vendor, amount, date, category, notes, status]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        department: { type: string }
+        vendor: { type: string }
+        amount: { type: number }
+        date: { type: string, format: date }
+        category: { type: string }
+        notes: { type: string }
+        status: { type: string }
+    ExpenseInput:
+      type: object
+      required: [title, department, vendor, amount, date, category, notes, status]
+      properties:
+        title: { type: string }
+        department: { type: string }
+        vendor: { type: string }
+        amount: { type: number, minimum: 0 }
+        date: { type: string, format: date }
+        category: { type: string }
+        notes: { type: string }
+        status: { type: string }
+    ExpenseUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        department: { type: string }
+        vendor: { type: string }
+        amount: { type: number, minimum: 0 }
+        date: { type: string, format: date }
+        category: { type: string }
+        notes: { type: string }
+        status: { type: string }
+    Contract:
+      type: object
+      required: [id, title, party, role, department, value, currency, startDate, endDate, status, paymentSchedule, paidAmount, remainingAmount]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        party: { type: string }
+        role: { type: string }
+        department: { type: string }
+        value: { type: number }
+        currency: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        status: { type: string }
+        notes: { type: string }
+        documentPath: { type: ["string", "null"] }
+        paymentSchedule:
+          type: array
+          items: { $ref: "#/components/schemas/ContractPayment" }
+        paidAmount: { type: number }
+        remainingAmount: { type: number }
+    ContractInput:
+      type: object
+      required: [title, party, role, department, value, currency, startDate, endDate, status, paymentSchedule]
+      properties:
+        title: { type: string }
+        party: { type: string }
+        role: { type: string }
+        department: { type: string }
+        value: { type: number, minimum: 0 }
+        currency: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        status: { type: string }
+        notes: { type: string }
+        documentPath: { type: ["string", "null"] }
+        paymentSchedule:
+          type: array
+          items: { $ref: "#/components/schemas/ContractPaymentInput" }
+    ContractUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        party: { type: string }
+        role: { type: string }
+        department: { type: string }
+        value: { type: number, minimum: 0 }
+        currency: { type: string }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        status: { type: string }
+        notes: { type: string }
+        documentPath: { type: ["string", "null"] }
+        paymentSchedule:
+          type: array
+          items: { $ref: "#/components/schemas/ContractPaymentInput" }
+    ContractPayment:
+      type: object
+      required: [id, label, amount, dueDate, status]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        amount: { type: number }
+        dueDate: { type: string, format: date }
+        status: { type: string }
+    ContractPaymentInput:
+      type: object
+      required: [label, amount, dueDate, status]
+      properties:
+        label: { type: string }
+        amount: { type: number, minimum: 0 }
+        dueDate: { type: string, format: date }
+        status: { type: string }
+    PaymentRequest:
+      type: object
+      required: [id, recipient, description, amount, dueDate, department, status]
+      properties:
+        id: { type: string }
+        recipient: { type: string }
+        contractId: { type: ["string", "null"] }
+        description: { type: string }
+        amount: { type: number }
+        dueDate: { type: string, format: date }
+        department: { type: string }
+        notes: { type: string }
+        status: { type: string }
+    PaymentRequestInput:
+      type: object
+      required: [recipient, description, amount, dueDate, department, notes, status]
+      properties:
+        recipient: { type: string }
+        contractId: { type: ["string", "null"] }
+        description: { type: string }
+        amount: { type: number, minimum: 0 }
+        dueDate: { type: string, format: date }
+        department: { type: string }
+        notes: { type: string }
+        status: { type: string }
+    PaymentRequestUpdate:
+      type: object
+      properties:
+        recipient: { type: string }
+        contractId: { type: ["string", "null"] }
+        description: { type: string }
+        amount: { type: number, minimum: 0 }
+        dueDate: { type: string, format: date }
+        department: { type: string }
+        notes: { type: string }
+        status: { type: string }
+    Payment:
+      type: object
+      required: [id, recipient, reason, amount, status, transactionReference, date, mode]
+      properties:
+        id: { type: string }
+        recipient: { type: string }
+        reason: { type: string }
+        amount: { type: number }
+        relatedContractId: { type: ["string", "null"] }
+        relatedExpenseId: { type: ["string", "null"] }
+        status: { type: string }
+        transactionReference: { type: ["string", "null"] }
+        date: { type: ["string", "null"], format: date }
+        mode: { type: string }
+    PaymentInput:
+      type: object
+      required: [recipient, reason, amount, status, mode]
+      properties:
+        recipient: { type: string }
+        reason: { type: string }
+        amount: { type: number, minimum: 0 }
+        relatedContractId: { type: ["string", "null"] }
+        relatedExpenseId: { type: ["string", "null"] }
+        status: { type: string }
+        mode: { type: string }
+    Asset:
+      type: object
+      required: [id, name, category, vendor, cost, rentalStart, rentalEnd, department, paymentStatus]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        category: { type: string }
+        vendor: { type: string }
+        cost: { type: number }
+        rentalStart: { type: string, format: date }
+        rentalEnd: { type: string, format: date }
+        department: { type: string }
+        paymentStatus: { type: string }
+    AssetInput:
+      type: object
+      required: [name, category, vendor, cost, rentalStart, rentalEnd, department, paymentStatus]
+      properties:
+        name: { type: string }
+        category: { type: string }
+        vendor: { type: string }
+        cost: { type: number, minimum: 0 }
+        rentalStart: { type: string, format: date }
+        rentalEnd: { type: string, format: date }
+        department: { type: string }
+        paymentStatus: { type: string }
+    DecisionInput:
+      type: object
+      required: [description]
+      properties:
+        description: { type: string, minLength: 1 }
+    DecisionSimulation:
+      type: object
+      required: [id, description, currentAvailable, estimatedCost, newAvailable, newForecast, riskLevel, affectedDepartments, cashFlowImpact]
+      properties:
+        id: { type: string }
+        description: { type: string }
+        currentAvailable: { type: number }
+        estimatedCost: { type: number }
+        newAvailable: { type: number }
+        newForecast: { type: number }
+        riskLevel: { type: string }
+        affectedDepartments:
+          type: array
+          items: { type: string }
+        cashFlowImpact: { type: number }
+    Decision:
+      allOf:
+        - $ref: "#/components/schemas/DecisionSimulation"
+        - type: object
+          required: [status, createdAt]
+          properties:
+            status: { type: string }
+            createdAt: { type: string, format: date-time }
+    Insight:
+      type: object
+      required: [id, type, title, message, severity]
+      properties:
+        id: { type: string }
+        type: { type: string }
+        title: { type: string }
+        message: { type: string }
+        severity: { type: string }
+    UpcomingPayment:
+      type: object
+      required: [id, label, recipient, amount, dueDate, daysUntilDue]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        recipient: { type: string }
+        amount: { type: number }
+        dueDate: { type: string, format: date }
+        daysUntilDue: { type: integer }
+    ProductionProgress:
+      type: object
+      required: [phase, percent, daysCompleted, totalDays]
+      properties:
+        phase: { type: string }
+        percent: { type: number }
+        daysCompleted: { type: integer }
+        totalDays: { type: integer }
+    CashFlowEntry:
+      type: object
+      required: [id, date, label, type, amount, projectedBalance, phase]
+      properties:
+        id: { type: string }
+        date: { type: string, format: date }
+        label: { type: string }
+        type: { type: string }
+        amount: { type: number }
+        projectedBalance: { type: number }
+        phase: { type: string }
+    Activity:
+      type: object
+      required: [id, action, detail, createdAt]
+      properties:
+        id: { type: string }
+        action: { type: string }
+        detail: { type: string }
+        actor: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+    FinancialHealth:
+      type: object
+      required: [score, status, factors]
+      properties:
+        score: { type: integer, minimum: 0, maximum: 100 }
+        status: { type: string }
+        factors:
+          type: array
+          items: { type: string }
 
