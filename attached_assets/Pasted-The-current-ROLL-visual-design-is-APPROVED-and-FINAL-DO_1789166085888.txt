@@ -1,0 +1,1053 @@
+The current ROLL visual design is APPROVED and FINAL.
+
+DO NOT REDESIGN ANYTHING.
+
+This is extremely important.
+
+DO NOT change:
+- landing page
+- colors
+- fonts
+- typography
+- logo
+- spacing
+- sidebar
+- navigation
+- card styles
+- button styles
+- imagery
+- animations
+- page structure
+- visual identity
+
+DO NOT replace the current design with another dashboard.
+
+KEEP THE CURRENT UI EXACTLY AS IT IS.
+
+Your job now is ONLY to:
+
+1. Fix all broken functionality.
+2. Connect the existing UI to real working data.
+3. Build the complete ROLL financial system.
+4. Create a fully populated demo production that automatically appears after login.
+5. Make every important button and flow functional.
+
+==================================================
+FIRST: FIX THE CURRENT ERROR
+==================================================
+
+The current dashboard shows:
+
+"Unable to load dashboard"
+
+Fix this first.
+
+The dashboard must load successfully after authentication.
+
+Check:
+- API requests
+- database connection
+- production/project IDs
+- authentication state
+- demo project creation
+- backend routes
+- frontend data fetching
+- environment variables
+
+Do not hide the error with fake hardcoded UI.
+
+Fix the actual data flow.
+
+==================================================
+DEMO EXPERIENCE FOR PRESENTATION
+==================================================
+
+This is VERY IMPORTANT.
+
+When a user signs up or signs in for the first time, automatically give them access to a complete DEMO production.
+
+I need the demo so we can present ROLL immediately without manually entering dozens of records.
+
+Create a demo project called:
+
+THE LAST FRAME
+
+Label it clearly:
+
+DEMO PRODUCTION
+
+Project information:
+
+Project:
+THE LAST FRAME
+
+Type:
+Feature Film
+
+Location:
+Kuwait
+
+Currency:
+KWD
+
+Total Budget:
+KWD 250,000
+
+Production Status:
+IN PRODUCTION
+
+Production Days:
+45
+
+Current Production Day:
+21
+
+Production Progress:
+47%
+
+Use a cinematic project image that matches the current ROLL design.
+
+The demo must feel like a REAL production currently being filmed.
+
+==================================================
+DEMO FINANCIAL POSITION
+==================================================
+
+Populate the demo with realistic and mathematically consistent financial data.
+
+Starting budget:
+
+KWD 250,000
+
+Create enough contracts, expenses and commitments so the dashboard has meaningful numbers.
+
+Target approximate demo overview:
+
+TOTAL BUDGET
+KWD 250,000
+
+PAID / SPENT
+around KWD 87,000
+
+COMMITTED
+around KWD 96,000
+
+ACTUALLY AVAILABLE
+calculated correctly from the financial engine
+
+FORECAST FINAL COST
+around KWD 235,000–245,000
+
+Do NOT simply hardcode these dashboard values.
+
+Generate the underlying transactions and calculate totals from them.
+
+==================================================
+CORE FINANCIAL FORMULA
+==================================================
+
+Use ONE central financial calculation engine.
+
+All parts of ROLL must use the same data.
+
+Important:
+
+ACTUALLY AVAILABLE should represent money that is genuinely still free to use.
+
+Do not double-count commitments.
+
+For example:
+
+If a contract is KWD 20,000
+and KWD 5,000 has already been paid:
+
+Paid = KWD 5,000
+
+Remaining Commitment = KWD 15,000
+
+The remaining commitment should be included in committed costs.
+
+Do not subtract the paid KWD 5,000 twice.
+
+==================================================
+DEMO BUDGET DEPARTMENTS
+==================================================
+
+Populate the demo budget with realistic departments.
+
+Example:
+
+CAST
+KWD 48,000
+
+CREW
+KWD 42,000
+
+CAMERA
+KWD 22,000
+
+LIGHTING
+KWD 12,000
+
+LOCATIONS
+KWD 20,000
+
+ART DEPARTMENT
+KWD 18,000
+
+WARDROBE
+KWD 9,000
+
+TRANSPORT
+KWD 10,000
+
+EQUIPMENT
+KWD 14,000
+
+POST-PRODUCTION
+KWD 32,000
+
+MARKETING
+KWD 10,000
+
+CONTINGENCY / OTHER
+KWD 13,000
+
+Total must equal exactly KWD 250,000.
+
+For every department calculate:
+
+Allocated
+Paid
+Committed
+Remaining
+Forecast
+
+==================================================
+FUNCTIONAL BUDGET SYSTEM
+==================================================
+
+The Budget section must allow users to:
+
+Add budget department
+Edit allocation
+Delete allocation
+View spending
+View committed amount
+View remaining
+View forecast
+
+All totals update automatically.
+
+==================================================
+DEMO CONTRACTS
+==================================================
+
+Create multiple realistic contracts.
+
+Examples:
+
+LEAD ACTOR CONTRACT
+
+Party:
+Omar Al Salem
+
+Department:
+Cast
+
+Total:
+KWD 20,000
+
+Paid:
+KWD 5,000
+
+Remaining:
+KWD 15,000
+
+Status:
+ACTIVE
+
+
+DIRECTOR CONTRACT
+
+KWD 18,000
+
+Status:
+ACTIVE
+
+
+ARRI CAMERA PACKAGE
+
+Supplier:
+Cinema Equipment Co.
+
+Department:
+Camera
+
+Contract Value:
+KWD 8,500
+
+Status:
+ACTIVE
+
+
+MAIN LOCATION AGREEMENT
+
+KWD 12,000
+
+
+POST-PRODUCTION AGREEMENT
+
+KWD 24,000
+
+
+CREW SERVICE AGREEMENT
+
+KWD 22,000
+
+Populate additional realistic production contracts.
+
+==================================================
+FULL CONTRACT SYSTEM
+==================================================
+
+The Contracts section must fully work.
+
+Allow:
+
+CREATE CONTRACT
+
+EDIT CONTRACT
+
+VIEW CONTRACT
+
+UPLOAD CONTRACT DOCUMENT
+
+DOWNLOAD CONTRACT
+
+CHANGE STATUS
+
+DELETE / CANCEL CONTRACT
+
+Fields:
+
+Contract Title
+Contract Party
+Role / Service
+Department
+Contract Value
+Currency
+Start Date
+End Date
+Status
+Notes
+
+Statuses:
+
+DRAFT
+ACTIVE
+COMPLETED
+CANCELLED
+
+ACTIVE contracts must affect COMMITTED costs.
+
+==================================================
+CONTRACT INSTALLMENTS
+==================================================
+
+Every contract can contain payment installments.
+
+Example:
+
+LEAD ACTOR CONTRACT
+KWD 20,000
+
+INSTALLMENT 01
+KWD 5,000
+PAID
+
+INSTALLMENT 02
+KWD 7,500
+DUE SEPTEMBER 25
+UPCOMING
+
+INSTALLMENT 03
+KWD 7,500
+DUE OCTOBER 15
+UPCOMING
+
+Installments must automatically appear in:
+
+Contracts
+Payments
+Upcoming Payments
+Cash Flow
+Committed Costs
+
+==================================================
+EXPENSE SYSTEM
+==================================================
+
+The Expenses page must fully work.
+
+Allow:
+
+CREATE EXPENSE
+
+EDIT
+
+APPROVE
+
+MARK PAID
+
+DELETE
+
+Fields:
+
+Expense Title
+Department
+Vendor
+Amount
+Date
+Category
+Notes
+Status
+
+Statuses:
+
+PENDING
+APPROVED
+PAID
+
+Populate demo expenses such as:
+
+Catering
+Transport
+Permits
+Wardrobe purchase
+Props
+Fuel
+Crew overtime
+Location preparation
+Equipment accessories
+
+When paid:
+
+update project finances automatically.
+
+==================================================
+PAYMENT REQUESTS
+==================================================
+
+Make the Requests section functional.
+
+Allow creation of:
+
+PAYMENT REQUEST
+
+Fields:
+
+Recipient
+Related Contract
+Department
+Description
+Amount
+Due Date
+Notes
+
+Statuses:
+
+REQUESTED
+UNDER REVIEW
+APPROVED
+REJECTED
+PAID
+
+Populate realistic demo requests.
+
+Example:
+
+CAMERA RENTAL EXTENSION
+
+Recipient:
+Cinema Equipment Co.
+
+Amount:
+KWD 1,850
+
+Status:
+UNDER REVIEW
+
+
+CREW OVERTIME
+
+Amount:
+KWD 1,200
+
+Status:
+REQUESTED
+
+==================================================
+PAYMENTS
+==================================================
+
+Make the Payments section fully functional.
+
+Payments may originate from:
+
+Contract installment
+Expense
+Payment request
+Vendor payment
+
+Display:
+
+Recipient
+Amount
+Purpose
+Department
+Related Contract
+Transaction Date
+Transaction Reference
+Status
+
+Statuses:
+
+PENDING
+PROCESSING
+PAID
+FAILED
+
+For this university MVP:
+
+USE TEST / SANDBOX PAYMENTS ONLY.
+
+No real-money transaction is required.
+
+==================================================
+PAYMENT CONFIRMATION
+==================================================
+
+Before approving a payment show:
+
+RECIPIENT
+
+AMOUNT
+
+REASON
+
+RELATED CONTRACT
+
+AVAILABLE BEFORE PAYMENT
+
+AVAILABLE AFTER PAYMENT
+
+CASH FLOW IMPACT
+
+ROLL AI RISK
+
+Then:
+
+CONFIRM PAYMENT
+
+CANCEL
+
+After successful test payment:
+
+update spent
+update contract paid amount
+update commitment
+update cash flow
+update department
+update financial health
+record transaction
+record activity
+
+==================================================
+CASH FLOW
+==================================================
+
+Make Cash Flow fully functional.
+
+Show:
+
+CURRENT CASH POSITION
+
+MONEY IN
+
+MONEY OUT
+
+PAID EXPENSES
+
+UPCOMING CONTRACT PAYMENTS
+
+PAYMENT REQUESTS
+
+PROJECTED BALANCE
+
+Connect the cash flow to production phases:
+
+PRE-PRODUCTION
+SHOOTING
+POST-PRODUCTION
+DELIVERY
+
+Populate enough demo events to make the timeline meaningful.
+
+==================================================
+PRODUCTION ASSETS
+==================================================
+
+Make Assets functional.
+
+Populate demo assets such as:
+
+ARRI ALEXA 35
+
+Category:
+Camera
+
+Vendor:
+Cinema Equipment Co.
+
+Rental:
+6 Days
+
+Cost:
+KWD 1,850
+
+
+ANGENIEUX ZOOM LENS PACKAGE
+
+KWD 950
+
+
+LIGHTING PACKAGE
+
+KWD 1,400
+
+
+WIRELESS SOUND KIT
+
+KWD 650
+
+Allow users to create/edit assets.
+
+Asset costs must connect to finances.
+
+==================================================
+ROLL AI — MAIN FEATURE
+==================================================
+
+ROLL AI is the signature feature of the product.
+
+Make it FUNCTIONAL.
+
+The producer must be able to type a production decision.
+
+Examples:
+
+"What happens if we add 2 shooting days?"
+
+"What happens if we extend the ARRI camera rental by 3 days?"
+
+"What if we add one more night shoot?"
+
+"What if crew overtime increases by 20%?"
+
+"What if we move the shoot to another location?"
+
+ROLL must use the project's actual financial information to simulate the result.
+
+==================================================
+AI RESULT
+==================================================
+
+Display:
+
+CURRENT AVAILABLE
+
+DECISION
+
+ESTIMATED ADDITIONAL COST
+
+NEW AVAILABLE
+
+CURRENT FORECAST
+
+NEW FORECAST
+
+AFFECTED DEPARTMENTS
+
+CASH FLOW IMPACT
+
+RISK LEVEL
+
+Example:
+
+CURRENT AVAILABLE
+KWD 66,250
+
+DECISION
+ADD 2 SHOOTING DAYS
+
+ESTIMATED COST
+KWD 8,600
+
+NEW AVAILABLE
+KWD 57,650
+
+NEW FORECAST
+KWD 241,000
+
+RISK
+MODERATE
+
+Buttons:
+
+APPROVE DECISION
+
+REJECT
+
+==================================================
+VERY IMPORTANT AI BEHAVIOR
+==================================================
+
+Running an AI simulation must NOT immediately modify the project.
+
+It is only a preview.
+
+Only after:
+
+APPROVE DECISION
+
+should the system update project finances.
+
+When approved:
+
+Record AI decision
+Add financial impact
+Update department forecast
+Update total forecast
+Update available funds
+Update cash flow
+Update Financial Health
+Add activity-history entry
+
+When rejected:
+
+Do not change financial data.
+
+==================================================
+DEMO AI SCENARIOS
+==================================================
+
+Make the demo especially good for presentation.
+
+Preconfigure suggested questions such as:
+
++ ADD 2 SHOOTING DAYS
+
++ EXTEND CAMERA RENTAL
+
++ ADD NIGHT SHOOT
+
++ INCREASE CREW OVERTIME
+
++ CHANGE LOCATION
+
+Clicking one should run a useful simulation.
+
+==================================================
+AI FINANCIAL ADVISOR
+==================================================
+
+ROLL should generate proactive financial insights.
+
+Populate the demo with several useful insights.
+
+Example:
+
+CASH FLOW RISK
+
+KWD 18,500 in payments are due within the next 14 days.
+
+
+CAMERA DEPARTMENT
+
+Forecast is KWD 1,250 above allocation.
+
+
+POST-PRODUCTION
+
+Current commitments are consuming 75% of the allocated budget.
+
+
+CREW COST ALERT
+
+Overtime spending increased 18% this week.
+
+
+CONTRACT WARNING
+
+Three contract payments are due before the next expected cash inflow.
+
+==================================================
+FINANCIAL HEALTH
+==================================================
+
+Make Financial Health dynamic.
+
+Score:
+
+0–100
+
+Example demo:
+
+82 / 100
+
+STABLE
+
+Use:
+
+Budget usage
+Available funds
+Committed obligations
+Cash-flow forecast
+Department overruns
+Upcoming payments
+Final cost forecast
+
+Statuses:
+
+HEALTHY
+STABLE
+WATCH
+HIGH RISK
+
+The score must change when financial data changes.
+
+==================================================
+PROJECT HISTORY
+==================================================
+
+Make History functional.
+
+Populate demo activity such as:
+
+Actor contract created
+
+Camera contract approved
+
+Location payment completed
+
+Crew expense added
+
+ROLL AI analysis performed
+
+Payment approved
+
+Budget updated
+
+Upcoming payment warning generated
+
+Display date/time and action.
+
+==================================================
+PROJECT MANAGEMENT
+==================================================
+
+Users must also be able to create a NEW real project.
+
+Provide:
+
+CREATE PROJECT
+
+Fields:
+
+Project Name
+Project Type
+Image
+Location
+Currency
+Budget
+Start Date
+End Date
+Production Days
+
+New projects begin empty.
+
+THE LAST FRAME remains the Demo Project.
+
+==================================================
+DEMO VS USER PROJECT
+==================================================
+
+Clearly distinguish:
+
+DEMO PRODUCTION
+
+and
+
+USER PRODUCTION
+
+The demo should always be easy to access for presentations.
+
+Do not delete the demo if a user creates another project.
+
+==================================================
+AUTHENTICATION
+==================================================
+
+Keep the current sign-up/sign-in design unchanged.
+
+Make authentication functional.
+
+Support:
+
+SIGN UP
+SIGN IN
+SIGN OUT
+
+Persist login after refresh.
+
+If Google login is currently only decorative and cannot be properly configured yet, do not show a fake successful Google flow.
+
+Email/password authentication must work.
+
+==================================================
+DATABASE
+==================================================
+
+Persist all information.
+
+Database entities should include:
+
+Users
+Projects
+Budget Departments
+Expenses
+Contracts
+Contract Installments
+Payment Requests
+Payments
+Assets
+Cash Flow Entries
+AI Decisions
+AI Insights
+Financial Health History
+Activity History
+
+Refreshing the browser must not erase data.
+
+==================================================
+ARABIC + ENGLISH
+==================================================
+
+Keep the existing language support.
+
+All pages and new functionality must support:
+
+English
+
+Arabic
+
+Arabic must use correct RTL layout.
+
+Do not change the existing visual design while implementing RTL.
+
+==================================================
+CRITICAL FUNCTIONAL TEST
+==================================================
+
+Before finishing, personally test this exact flow:
+
+1. Sign up.
+
+2. Demo project THE LAST FRAME loads successfully.
+
+3. Dashboard displays financial data.
+
+4. Open Contracts.
+
+5. Create a KWD 20,000 contract.
+
+6. Mark KWD 5,000 installment as paid.
+
+7. Confirm remaining KWD 15,000 appears as committed.
+
+8. Create a payment request.
+
+9. Open ROLL AI.
+
+10. Simulate ADD 2 SHOOTING DAYS.
+
+11. Confirm financial numbers change only in simulation.
+
+12. Reject the decision and confirm project remains unchanged.
+
+13. Run again.
+
+14. Approve the decision.
+
+15. Confirm forecast and financial figures update.
+
+16. Process a sandbox/test payment.
+
+17. Confirm:
+Spent updates
+Committed updates correctly
+Cash Flow updates
+Financial Health updates
+History updates
+
+18. Refresh the browser.
+
+19. Confirm all changes remain saved.
+
+==================================================
+NO FAKE FUNCTIONALITY
+==================================================
+
+No fake buttons.
+
+No empty navigation sections.
+
+No forms that do not save.
+
+No hardcoded dashboard numbers disconnected from underlying data.
+
+No buttons that only visually change without database logic.
+
+==================================================
+FINAL PRIORITY
+==================================================
+
+DO NOT CHANGE THE DESIGN.
+
+The visual design is already approved.
+
+Focus entirely on functionality and demonstration quality.
+
+When we present ROLL, I want to log in and immediately see a realistic film production already running.
+
+The audience should be able to understand the entire product without us manually creating a project during the presentation.
+
+THE LAST FRAME should demonstrate:
+
+Budget
+Contracts
+Expenses
+Commitments
+Payments
+Cash Flow
+Assets
+Financial Health
+ROLL AI
+History
+
+as one connected financial system.
+
+The core story must be obvious:
+
+ROLL shows producers the TRUE financial position of a film and predicts the financial impact of a decision BEFORE they approve it.

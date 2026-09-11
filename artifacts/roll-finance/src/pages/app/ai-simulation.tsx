@@ -2,10 +2,12 @@ import { useSimulateDecision, useApproveDecision, useRejectDecision } from "@wor
 import { useState } from "react";
 import { BrainCircuit, Loader2, Play, Check, X, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const DEMO_PROJECT_ID = "demo-1";
+import { useActiveProject } from "@/lib/project-context";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function AiSimulation() {
+  const { projectId } = useActiveProject();
+  const queryClient = useQueryClient();
   const [prompt, setPrompt] = useState("");
   const simulate = useSimulateDecision();
   const approve = useApproveDecision();
@@ -13,20 +15,22 @@ export default function AiSimulation() {
 
   const handleSimulate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt.trim()) return;
-    await simulate.mutateAsync({ projectId: DEMO_PROJECT_ID, data: { description: prompt } });
+    if (!prompt.trim() || !projectId) return;
+    await simulate.mutateAsync({ projectId, data: { description: prompt } });
   };
 
   const handleApprove = async () => {
-    if (!simulate.data) return;
-    await approve.mutateAsync({ projectId: DEMO_PROJECT_ID, decisionId: simulate.data.id });
+    if (!simulate.data || !projectId) return;
+    await approve.mutateAsync({ projectId, decisionId: simulate.data.id });
+    await queryClient.invalidateQueries();
     setPrompt("");
     simulate.reset();
   };
 
   const handleReject = async () => {
-    if (!simulate.data) return;
-    await reject.mutateAsync({ projectId: DEMO_PROJECT_ID, decisionId: simulate.data.id });
+    if (!simulate.data || !projectId) return;
+    await reject.mutateAsync({ projectId, decisionId: simulate.data.id });
+    await queryClient.invalidateQueries();
     setPrompt("");
     simulate.reset();
   };

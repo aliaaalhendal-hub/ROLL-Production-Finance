@@ -6,8 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-
-const DEMO_PROJECT_ID = "demo-1";
+import { useActiveProject } from "@/lib/project-context";
 
 const expenseSchema = z.object({
   title: z.string().min(1),
@@ -21,7 +20,8 @@ const expenseSchema = z.object({
 });
 
 export default function Expenses() {
-  const { data: expenses, isLoading, refetch } = useListExpenses(DEMO_PROJECT_ID);
+  const { projectId, isLoading: isProjectLoading } = useActiveProject();
+  const { data: expenses, isLoading, refetch } = useListExpenses(projectId ?? "");
   const createExpense = useCreateExpense();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -33,15 +33,16 @@ export default function Expenses() {
   });
 
   const onSubmit = async (values: z.infer<typeof expenseSchema>) => {
+    if (!projectId) return;
     try {
-      await createExpense.mutateAsync({ projectId: DEMO_PROJECT_ID, data: values });
+      await createExpense.mutateAsync({ projectId, data: values });
       setIsOpen(false);
       form.reset();
       refetch();
     } catch (e) { console.error(e); }
   };
 
-  if (isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (isProjectLoading || isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20">

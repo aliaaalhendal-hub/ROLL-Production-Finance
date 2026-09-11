@@ -1,13 +1,13 @@
 import { useListPayments } from "@workspace/api-client-react";
 import { Loader2, CreditCard, ArrowRightLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const DEMO_PROJECT_ID = "demo-1";
+import { useActiveProject } from "@/lib/project-context";
 
 export default function Payments() {
-  const { data: payments, isLoading } = useListPayments(DEMO_PROJECT_ID);
+  const { projectId, activeProject, isLoading: isProjectLoading } = useActiveProject();
+  const { data: payments, isLoading } = useListPayments(projectId ?? "");
 
-  if (isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (isProjectLoading || isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20">
@@ -44,13 +44,13 @@ export default function Payments() {
                 <td className="p-4">
                   <span className={cn(
                     "text-xs uppercase tracking-widest px-2 py-1",
-                    pay.status === 'Completed' ? "text-green-500 bg-green-500/10" : "text-primary bg-primary/10"
+                     pay.status.toLowerCase() === 'paid' ? "text-green-500 bg-green-500/10" : "text-primary bg-primary/10"
                   )}>
                     {pay.status}
                   </span>
                 </td>
                 <td className="p-4 font-serif text-xl text-primary text-right flex justify-end items-center gap-2">
-                  ${pay.amount.toLocaleString()}
+                   {activeProject?.currency} {pay.amount.toLocaleString()}
                 </td>
               </tr>
             ))}

@@ -1,13 +1,13 @@
 import { useGetCashFlow } from "@workspace/api-client-react";
 import { Loader2, Activity } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-
-const DEMO_PROJECT_ID = "demo-1";
+import { useActiveProject } from "@/lib/project-context";
 
 export default function CashFlow() {
-  const { data: entries, isLoading } = useGetCashFlow(DEMO_PROJECT_ID);
+  const { projectId, activeProject, isLoading: isProjectLoading } = useActiveProject();
+  const { data: entries, isLoading } = useGetCashFlow(projectId ?? "");
 
-  if (isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (isProjectLoading || isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   // Format data for chart
   const chartData = entries?.map(e => ({
@@ -49,14 +49,14 @@ export default function CashFlow() {
               <YAxis 
                 axisLine={false} 
                 tickLine={false} 
-                tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
+                tickFormatter={(val) => `${activeProject?.currency} ${(val / 1000).toFixed(0)}k`}
                 tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                 dx={-10}
               />
               <Tooltip 
                 contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: 0 }}
                 itemStyle={{ color: 'hsl(var(--primary))' }}
-                formatter={(value: number) => [`$${value.toLocaleString()}`, 'Balance']}
+                formatter={(value: number) => [`${activeProject?.currency} ${value.toLocaleString()}`, 'Balance']}
                 labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 'bold', marginBottom: '8px' }}
               />
               <Area 
@@ -87,11 +87,11 @@ export default function CashFlow() {
                 </div>
               </div>
               <div className="text-right">
-                <div className={`font-serif text-xl ${entry.type === 'inflow' ? 'text-green-500' : 'text-foreground'}`}>
-                  {entry.type === 'inflow' ? '+' : '-'}${Math.abs(entry.amount).toLocaleString()}
+                <div className={`font-serif text-xl ${entry.amount > 0 ? 'text-green-500' : 'text-foreground'}`}>
+                  {entry.amount > 0 ? '+' : '-'}{activeProject?.currency} {Math.abs(entry.amount).toLocaleString()}
                 </div>
                 <div className="text-xs uppercase tracking-widest text-muted-foreground mt-1">
-                  Bal: ${entry.projectedBalance.toLocaleString()}
+                  Bal: {activeProject?.currency} {entry.projectedBalance.toLocaleString()}
                 </div>
               </div>
             </div>

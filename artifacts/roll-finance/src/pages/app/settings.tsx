@@ -6,8 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-
-const DEMO_PROJECT_ID = "demo-1";
+import { useActiveProject } from "@/lib/project-context";
 
 const projectSchema = z.object({
   name: z.string().min(1),
@@ -21,7 +20,8 @@ const projectSchema = z.object({
 });
 
 export default function Settings() {
-  const { data: project, isLoading, refetch } = useGetProject(DEMO_PROJECT_ID);
+  const { projectId, isLoading: isProjectLoading, refetchProjects } = useActiveProject();
+  const { data: project, isLoading, refetch } = useGetProject(projectId ?? "");
   const updateProject = useUpdateProject();
   const { toast } = useToast();
 
@@ -40,16 +40,18 @@ export default function Settings() {
   });
 
   const onSubmit = async (values: z.infer<typeof projectSchema>) => {
+    if (!projectId) return;
     try {
-      await updateProject.mutateAsync({ projectId: DEMO_PROJECT_ID, data: values });
+      await updateProject.mutateAsync({ projectId, data: values });
       toast({ title: "Settings Saved", description: "Project configuration updated successfully." });
-      refetch();
+      await refetch();
+      await refetchProjects();
     } catch (e) {
       toast({ title: "Error", description: "Failed to save settings.", variant: "destructive" });
     }
   };
 
-  if (isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (isProjectLoading || isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-4xl">

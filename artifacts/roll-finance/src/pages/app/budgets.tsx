@@ -7,8 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-
-const DEMO_PROJECT_ID = "demo-1";
+import { useActiveProject } from "@/lib/project-context";
 
 const budgetSchema = z.object({
   department: z.string().min(1, "Department is required"),
@@ -16,7 +15,8 @@ const budgetSchema = z.object({
 });
 
 export default function Budgets() {
-  const { data: budgets, isLoading, refetch } = useListBudgets(DEMO_PROJECT_ID);
+  const { projectId, isLoading: isProjectLoading } = useActiveProject();
+  const { data: budgets, isLoading, refetch } = useListBudgets(projectId ?? "");
   const createBudget = useCreateBudget();
   const updateBudget = useUpdateBudget();
   
@@ -31,14 +31,15 @@ export default function Budgets() {
     }
   });
 
-  if (isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (isProjectLoading || isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   const onSubmit = async (values: z.infer<typeof budgetSchema>) => {
+    if (!projectId) return;
     try {
       if (editingId) {
-        await updateBudget.mutateAsync({ projectId: DEMO_PROJECT_ID, budgetId: editingId, data: values });
+        await updateBudget.mutateAsync({ projectId, budgetId: editingId, data: values });
       } else {
-        await createBudget.mutateAsync({ projectId: DEMO_PROJECT_ID, data: values });
+        await createBudget.mutateAsync({ projectId, data: values });
       }
       setIsCreateOpen(false);
       setEditingId(null);

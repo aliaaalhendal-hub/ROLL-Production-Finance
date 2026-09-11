@@ -7,6 +7,7 @@ import {
   Settings, LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProjectProvider, useActiveProject } from "@/lib/project-context";
 
 const NAV_ITEMS = [
   { href: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -22,8 +23,29 @@ const NAV_ITEMS = [
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
+  return (
+    <ProjectProvider>
+      <AppLayoutContent>{children}</AppLayoutContent>
+    </ProjectProvider>
+  );
+}
+
+function AppLayoutContent({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { signOut } = useClerk();
+  const { activeProject, projects, selectProject, isLoading, error } = useActiveProject();
+
+  if (isLoading) {
+    return <div className="h-screen bg-background" />;
+  }
+
+  if (error || !activeProject) {
+    return (
+      <div className="h-screen bg-background text-foreground flex items-center justify-center">
+        <p className="text-muted-foreground">Unable to load productions.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
@@ -38,8 +60,21 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         
         <div className="p-4 border-b border-border">
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Current Production</div>
-          <div className="font-serif text-lg">DEMO PRODUCTIONS</div>
-          <div className="text-sm text-muted-foreground">The Grand Budapest (Demo)</div>
+          <div className="font-serif text-lg">
+            {activeProject?.name === "THE LAST FRAME" ? "DEMO PRODUCTION" : "USER PRODUCTION"}
+          </div>
+          <select
+            value={activeProject?.id ?? ""}
+            onChange={(event) => selectProject(event.target.value)}
+            aria-label="Current production"
+            className="mt-1 w-full bg-transparent text-sm text-muted-foreground outline-none"
+          >
+            {projects.map((project) => (
+              <option key={project.id} value={project.id} className="bg-card text-foreground">
+                {project.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">

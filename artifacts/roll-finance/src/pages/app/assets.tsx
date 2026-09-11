@@ -1,13 +1,13 @@
 import { useListAssets } from "@workspace/api-client-react";
 import { Loader2, Box } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const DEMO_PROJECT_ID = "demo-1";
+import { useActiveProject } from "@/lib/project-context";
 
 export default function Assets() {
-  const { data: assets, isLoading } = useListAssets(DEMO_PROJECT_ID);
+  const { projectId, isLoading: isProjectLoading } = useActiveProject();
+  const { data: assets, isLoading } = useListAssets(projectId ?? "");
 
-  if (isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (isProjectLoading || isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20">

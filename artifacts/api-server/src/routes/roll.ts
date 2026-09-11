@@ -102,6 +102,10 @@ function calendar(value: string | Date): string {
   return typeof value === "string" ? value : value.toISOString().slice(0, 10);
 }
 
+function statusOf(value: string): string {
+  return value.trim().toLowerCase().replaceAll("_", " ");
+}
+
 async function financeFor(projectId: string) {
   const [project] = await db
     .select()
@@ -118,38 +122,43 @@ async function financeFor(projectId: string) {
 
   const paidExpenseIds = new Set(
     paymentRows
-      .filter((payment) => payment.status === "Paid" && payment.relatedExpenseId)
+      .filter((payment) => statusOf(payment.status) === "paid" && payment.relatedExpenseId)
       .map((payment) => payment.relatedExpenseId),
   );
   const paidExpenses = expenseRows.filter(
-    (expense) => expense.status === "Paid" || paidExpenseIds.has(expense.id),
+    (expense) => statusOf(expense.status) === "paid" || paidExpenseIds.has(expense.id),
   );
   const approvedExpenses = expenseRows.filter(
-    (expense) => expense.status === "Approved" && !paidExpenseIds.has(expense.id),
+    (expense) => statusOf(expense.status) === "approved" && !paidExpenseIds.has(expense.id),
   );
   const paidContractAmounts = new Map<string, number>();
   for (const payment of paymentRows) {
-    if (payment.status === "Paid" && payment.relatedContractId) {
+    if (statusOf(payment.status) === "paid" && payment.relatedContractId) {
       paidContractAmounts.set(
         payment.relatedContractId,
         (paidContractAmounts.get(payment.relatedContractId) ?? 0) + payment.amount,
       );
     }
   }
-  const activeContracts = contractRows.filter((contract) => contract.status === "Active");
+  const activeContracts = contractRows.filter((contract) => statusOf(contract.status) === "active");
   const contractCommitted = sum(
     activeContracts.map((contract) =>
       Math.max(0, contract.value - (paidContractAmounts.get(contract.id) ?? 0)),
     ),
   );
   const approvedCommitted = sum(approvedExpenses.map((expense) => expense.amount));
-  const spent = sum(paidExpenses.map((expense) => expense.amount));
+  const paidDirectly = sum(
+    paymentRows
+      .filter(
+        (payment) =>
+          statusOf(payment.status) === "paid" &&
+          !payment.relatedExpenseId,
+      )
+      .map((payment) => payment.amount),
+  );
+  const spent = sum(paidExpenses.map((expense) => expense.amount)) + paidDirectly;
   const committed = contractCommitted + approvedCommitted;
   const actuallyAvailable = project.totalBudget - spent - committed;
-  const forecastFinalCost = spent + committed + sum(
-    budgetRows.map((budget) => Math.max(0, budget.allocated * 0.04)),
-  );
-
   const budgets = budgetRows.map((budget) => {
     const paid = sum(
       paidExpenses
@@ -170,6 +179,7 @@ async function financeFor(projectId: string) {
         .map((expense) => expense.amount),
     );
     const departmentCommitted = contractRemaining + decisionCommitted;
+    const obligated = paid + departmentCommitted;
     return {
       id: budget.id,
       department: budget.department,
@@ -177,9 +187,11 @@ async function financeFor(projectId: string) {
       paid,
       committed: departmentCommitted,
       remaining: budget.allocated - paid - departmentCommitted,
-      forecast: paid + departmentCommitted + Math.max(0, budget.allocated * 0.04),
+      forecast: Math.max(obligated, budget.allocated * 0.96),
     };
   });
+  const totalAllocated = sum(budgetRows.map((budget) => budget.allocated));
+  const forecastFinalCost = Math.max(spent + committed, totalAllocated * 0.96);
 
   return {
     project,
@@ -377,9 +389,191 @@ async function ensureDemo(userId: string) {
   ]);
 }
 
+async function ensureCompleteDemo(userId: string) {
+  const [project] = await db
+    .select()
+    .from(projectsTable)
+    .where(and(eq(projectsTable.userId, userId), eq(projectsTable.name, "THE LAST FRAME")))
+    .limit(1);
+  if (!project) return;
+
+  const initialized = await db
+    .select({ id: activitiesTable.id })
+    .from(activitiesTable)
+    .where(
+      and(
+        eq(activitiesTable.projectId, project.id),
+        eq(activitiesTable.action, "Demo dataset initialized"),
+      ),
+    )
+    .limit(1);
+  if (initialized.length) return;
+
+  await db
+    .update(projectsTable)
+    .set({
+      type: "Feature Film",
+      location: "Kuwait",
+      currency: "KWD",
+      startDate: "2026-08-22",
+      endDate: "2026-10-05",
+      totalBudget: 250000,
+      status: "IN PRODUCTION",
+      productionDays: 45,
+      imageUrl:
+        "https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=1800&auto=format&fit=crop",
+    })
+    .where(eq(projectsTable.id, project.id));
+
+  await Promise.all([
+    db.delete(budgetsTable).where(eq(budgetsTable.projectId, project.id)),
+    db.delete(expensesTable).where(eq(expensesTable.projectId, project.id)),
+    db.delete(contractsTable).where(eq(contractsTable.projectId, project.id)),
+    db.delete(paymentRequestsTable).where(eq(paymentRequestsTable.projectId, project.id)),
+    db.delete(paymentsTable).where(eq(paymentsTable.projectId, project.id)),
+    db.delete(assetsTable).where(eq(assetsTable.projectId, project.id)),
+    db.delete(cashFlowEntriesTable).where(eq(cashFlowEntriesTable.projectId, project.id)),
+    db.delete(decisionsTable).where(eq(decisionsTable.projectId, project.id)),
+    db.delete(financialHealthHistoryTable).where(eq(financialHealthHistoryTable.projectId, project.id)),
+    db.delete(activitiesTable).where(eq(activitiesTable.projectId, project.id)),
+  ]);
+
+  await db.insert(budgetsTable).values([
+    { projectId: project.id, department: "Cast", allocated: 48000 },
+    { projectId: project.id, department: "Crew", allocated: 42000 },
+    { projectId: project.id, department: "Camera", allocated: 22000 },
+    { projectId: project.id, department: "Lighting", allocated: 12000 },
+    { projectId: project.id, department: "Locations", allocated: 20000 },
+    { projectId: project.id, department: "Art Department", allocated: 18000 },
+    { projectId: project.id, department: "Wardrobe", allocated: 9000 },
+    { projectId: project.id, department: "Transport", allocated: 10000 },
+    { projectId: project.id, department: "Equipment", allocated: 14000 },
+    { projectId: project.id, department: "Post-production", allocated: 32000 },
+    { projectId: project.id, department: "Marketing", allocated: 10000 },
+    { projectId: project.id, department: "Contingency / Other", allocated: 13000 },
+  ]);
+
+  const paidExpenses = await db
+    .insert(expensesTable)
+    .values([
+      { projectId: project.id, title: "Unit catering", department: "Crew", vendor: "Table Seven", amount: 6500, date: "2026-08-26", category: "Catering", notes: "Principal unit meals", status: "PAID" },
+      { projectId: project.id, title: "Production transport", department: "Transport", vendor: "Gulf Fleet", amount: 7200, date: "2026-08-28", category: "Transport", notes: "Crew buses and picture vehicles", status: "PAID" },
+      { projectId: project.id, title: "Filming permits", department: "Locations", vendor: "Kuwait Film Commission", amount: 4800, date: "2026-08-24", category: "Permits", notes: "City and shoreline permits", status: "PAID" },
+      { projectId: project.id, title: "Hero wardrobe purchase", department: "Wardrobe", vendor: "Atelier 26", amount: 6600, date: "2026-08-29", category: "Wardrobe", notes: "Principal cast wardrobe", status: "PAID" },
+      { projectId: project.id, title: "Practical props", department: "Art Department", vendor: "Frame Props", amount: 3800, date: "2026-09-01", category: "Props", notes: "Hero and background props", status: "PAID" },
+      { projectId: project.id, title: "Generator and vehicle fuel", department: "Equipment", vendor: "Kuwait Fuel Co.", amount: 2750, date: "2026-09-03", category: "Fuel", notes: "Week two production fuel", status: "PAID" },
+      { projectId: project.id, title: "Crew overtime", department: "Crew", vendor: "Production Payroll", amount: 4100, date: "2026-09-06", category: "Overtime", notes: "Night exterior turnaround", status: "PAID" },
+      { projectId: project.id, title: "Location preparation", department: "Locations", vendor: "Set Ready Kuwait", amount: 4000, date: "2026-08-23", category: "Preparation", notes: "Access, rigging and restoration", status: "PAID" },
+    ])
+    .returning();
+
+  const contractSeeds = [
+    { title: "Lead Actor Contract", party: "Omar Al Salem", role: "Lead Actor", department: "Cast", value: 20000, paid: 5000 },
+    { title: "Director Contract", party: "Layla Al Rashid", role: "Director", department: "Crew", value: 18000, paid: 9000 },
+    { title: "ARRI Camera Package", party: "Cinema Equipment Co.", role: "Camera Rental", department: "Camera", value: 8500, paid: 4250 },
+    { title: "Main Location Agreement", party: "Kuwait Waterfront Authority", role: "Location", department: "Locations", value: 12000, paid: 12000 },
+    { title: "Post-production Agreement", party: "Desert Frame Post", role: "Post-production", department: "Post-production", value: 24000, paid: 6000 },
+    { title: "Crew Service Agreement", party: "Kuwait Film Crew", role: "Crew Services", department: "Crew", value: 22000, paid: 11000 },
+    { title: "Lighting Package", party: "Luma Gulf", role: "Lighting Rental", department: "Lighting", value: 9500, paid: 0 },
+    { title: "Wardrobe Services", party: "Atelier 26", role: "Wardrobe", department: "Wardrobe", value: 8000, paid: 0 },
+    { title: "Picture Vehicle Agreement", party: "Gulf Fleet", role: "Transport", department: "Transport", value: 10000, paid: 0 },
+    { title: "Production Catering Agreement", party: "Table Seven", role: "Catering", department: "Crew", value: 11000, paid: 0 },
+  ];
+
+  const contracts = [];
+  for (const seed of contractSeeds) {
+    const remaining = seed.value - seed.paid;
+    const schedule: ContractPaymentRecord[] = [
+      { id: crypto.randomUUID(), label: "INSTALLMENT 01", amount: seed.paid || Math.round(seed.value * 0.25), dueDate: "2026-08-28", status: seed.paid ? "PAID" : "UPCOMING" },
+      { id: crypto.randomUUID(), label: "INSTALLMENT 02", amount: remaining / 2, dueDate: "2026-09-25", status: "UPCOMING" },
+      { id: crypto.randomUUID(), label: "INSTALLMENT 03", amount: remaining / 2, dueDate: "2026-10-15", status: "UPCOMING" },
+    ];
+    const [created] = await db
+      .insert(contractsTable)
+      .values({
+        projectId: project.id,
+        title: seed.title,
+        party: seed.party,
+        role: seed.role,
+        department: seed.department,
+        value: seed.value,
+        currency: "KWD",
+        startDate: "2026-08-22",
+        endDate: "2026-10-15",
+        status: seed.title === "Main Location Agreement" ? "COMPLETED" : "ACTIVE",
+        notes: "Demo production agreement",
+        paymentSchedule: schedule,
+      })
+      .returning();
+    contracts.push({ ...created, paid: seed.paid });
+  }
+
+  const paidContracts = contracts.filter((contract) => contract.paid > 0);
+  await db.insert(paymentsTable).values([
+    ...paidExpenses.map((expense, index) => ({
+      projectId: project.id,
+      recipient: expense.vendor,
+      reason: expense.title,
+      amount: expense.amount,
+      relatedExpenseId: expense.id,
+      status: "PAID",
+      transactionReference: `ROLL-DEMO-E${String(index + 1).padStart(3, "0")}`,
+      date: expense.date,
+      mode: "TEST",
+    })),
+    ...paidContracts.map((contract, index) => ({
+      projectId: project.id,
+      recipient: contract.party,
+      reason: `${contract.title} — INSTALLMENT 01`,
+      amount: contract.paid,
+      relatedContractId: contract.id,
+      status: "PAID",
+      transactionReference: `ROLL-DEMO-C${String(index + 1).padStart(3, "0")}`,
+      date: "2026-08-28",
+      mode: "TEST",
+    })),
+  ]);
+
+  await db.insert(paymentRequestsTable).values([
+    { projectId: project.id, recipient: "Cinema Equipment Co.", contractId: contracts[2].id, description: "Camera rental extension", amount: 1850, dueDate: "2026-09-18", department: "Camera", notes: "Three additional shooting days", status: "UNDER REVIEW" },
+    { projectId: project.id, recipient: "Production Payroll", contractId: contracts[5].id, description: "Crew overtime", amount: 1200, dueDate: "2026-09-16", department: "Crew", notes: "Night shoot overtime", status: "REQUESTED" },
+    { projectId: project.id, recipient: "Desert Frame Post", contractId: contracts[4].id, description: "Editorial milestone", amount: 6000, dueDate: "2026-09-25", department: "Post-production", notes: "Assembly cut delivery", status: "APPROVED" },
+  ]);
+
+  await db.insert(assetsTable).values([
+    { projectId: project.id, name: "ARRI ALEXA 35", category: "Camera", vendor: "Cinema Equipment Co.", cost: 1850, rentalStart: "2026-09-12", rentalEnd: "2026-09-18", department: "Camera", paymentStatus: "PAID" },
+    { projectId: project.id, name: "ANGENIEUX ZOOM LENS PACKAGE", category: "Camera", vendor: "Cinema Equipment Co.", cost: 950, rentalStart: "2026-09-12", rentalEnd: "2026-09-18", department: "Camera", paymentStatus: "APPROVED" },
+    { projectId: project.id, name: "LIGHTING PACKAGE", category: "Lighting", vendor: "Luma Gulf", cost: 1400, rentalStart: "2026-09-13", rentalEnd: "2026-09-19", department: "Lighting", paymentStatus: "APPROVED" },
+    { projectId: project.id, name: "WIRELESS SOUND KIT", category: "Sound", vendor: "Kuwait Sound", cost: 650, rentalStart: "2026-09-12", rentalEnd: "2026-09-18", department: "Crew", paymentStatus: "PAID" },
+  ]);
+
+  await db.insert(cashFlowEntriesTable).values([
+    { projectId: project.id, date: "2026-08-15", label: "Initial production funding", type: "MONEY IN", amount: 150000, projectedBalance: 150000, phase: "PRE-PRODUCTION" },
+    { projectId: project.id, date: "2026-08-22", label: "Pre-production costs", type: "MONEY OUT", amount: -42500, projectedBalance: 107500, phase: "PRE-PRODUCTION" },
+    { projectId: project.id, date: "2026-09-01", label: "Shooting costs paid", type: "PAID EXPENSES", amount: -44500, projectedBalance: 63000, phase: "SHOOTING" },
+    { projectId: project.id, date: "2026-09-18", label: "Camera rental extension", type: "PAYMENT REQUEST", amount: -1850, projectedBalance: 61150, phase: "SHOOTING" },
+    { projectId: project.id, date: "2026-09-25", label: "Contract installments", type: "UPCOMING CONTRACT PAYMENTS", amount: -18500, projectedBalance: 42650, phase: "SHOOTING" },
+    { projectId: project.id, date: "2026-10-01", label: "Final production funding", type: "MONEY IN", amount: 100000, projectedBalance: 142650, phase: "POST-PRODUCTION" },
+    { projectId: project.id, date: "2026-10-15", label: "Post-production milestones", type: "UPCOMING CONTRACT PAYMENTS", amount: -32000, projectedBalance: 110650, phase: "POST-PRODUCTION" },
+    { projectId: project.id, date: "2026-11-01", label: "Delivery reserve", type: "PROJECTED BALANCE", amount: -8000, projectedBalance: 102650, phase: "DELIVERY" },
+  ]);
+
+  await db.insert(activitiesTable).values([
+    { projectId: project.id, action: "Demo dataset initialized", detail: "Complete connected production finance demo created", actor: "ROLL" },
+    { projectId: project.id, action: "Actor contract created", detail: "Lead Actor Contract activated", actor: "Demo Producer" },
+    { projectId: project.id, action: "Camera contract approved", detail: "ARRI Camera Package approved", actor: "Demo Producer" },
+    { projectId: project.id, action: "Location payment completed", detail: "Main location agreement paid in test mode", actor: "Demo Producer" },
+    { projectId: project.id, action: "Crew expense added", detail: "Crew overtime recorded", actor: "Demo Producer" },
+    { projectId: project.id, action: "Payment approved", detail: "Post-production milestone approved", actor: "Demo Producer" },
+    { projectId: project.id, action: "Budget updated", detail: "Camera forecast reviewed", actor: "Demo Producer" },
+    { projectId: project.id, action: "Upcoming payment warning generated", detail: "Contract payments due before next cash inflow", actor: "ROLL AI" },
+  ]);
+}
+
 router.get("/projects", async (req, res): Promise<void> => {
   const userId = res.locals.userId as string;
   await ensureDemo(userId);
+  await ensureCompleteDemo(userId);
   const projects = await db
     .select()
     .from(projectsTable)
@@ -516,8 +710,14 @@ router.get("/projects/:projectId/dashboard", async (req, res): Promise<void> => 
     })),
     productionProgress: {
       phase: project.status.toUpperCase(),
-      percent: 42,
-      daysCompleted: 10,
+      percent:
+        project.name === "THE LAST FRAME"
+          ? 47
+          : Math.min(100, Math.round((Date.now() - new Date(project.startDate).getTime()) / 86400000 / project.productionDays * 100)),
+      daysCompleted:
+        project.name === "THE LAST FRAME"
+          ? 21
+          : Math.max(0, Math.min(project.productionDays, Math.ceil((Date.now() - new Date(project.startDate).getTime()) / 86400000))),
       totalDays: project.productionDays,
     },
   });
@@ -807,7 +1007,7 @@ router.post("/projects/:projectId/payments/:paymentId/process", async (req, res)
     if (contract) {
       let remaining = payment.amount;
       const paymentSchedule = contract.paymentSchedule.map((item) => {
-        if (remaining > 0 && item.status !== "Paid" && Math.abs(item.amount - remaining) < 0.01) {
+        if (remaining > 0 && statusOf(item.status) !== "paid" && Math.abs(item.amount - remaining) < 0.01) {
           remaining = 0;
           return { ...item, status: "Paid" };
         }
@@ -817,6 +1017,22 @@ router.post("/projects/:projectId/payments/:paymentId/process", async (req, res)
     }
   }
   await addActivity(project.id, "Payment completed", `KWD ${payment.amount.toLocaleString()} paid to ${payment.recipient} in test mode`);
+  const updatedFinance = await financeFor(project.id);
+  if (updatedFinance) {
+    await db.insert(cashFlowEntriesTable).values({
+      projectId: project.id,
+      date: today,
+      label: `${payment.recipient} — ${payment.reason}`,
+      type: "PAID EXPENSE",
+      amount: -payment.amount,
+      projectedBalance: updatedFinance.totals.actuallyAvailable,
+      phase: project.status,
+    });
+    await db.insert(financialHealthHistoryTable).values({
+      projectId: project.id,
+      ...healthFromFinance(updatedFinance),
+    });
+  }
   res.json(payment);
 });
 
@@ -919,6 +1135,22 @@ router.post("/projects/:projectId/decisions/:decisionId/approve", async (req, re
     status: "Approved",
   });
   await addActivity(project.id, "Decision approved", `${decision.description} — KWD ${decision.estimatedCost.toLocaleString()} committed`);
+  const updatedFinance = await financeFor(project.id);
+  if (updatedFinance) {
+    await db.insert(cashFlowEntriesTable).values({
+      projectId: project.id,
+      date: new Date().toISOString().slice(0, 10),
+      label: `Approved decision — ${decision.description}`,
+      type: "APPROVED DECISION",
+      amount: -decision.estimatedCost,
+      projectedBalance: updatedFinance.totals.actuallyAvailable,
+      phase: project.status,
+    });
+    await db.insert(financialHealthHistoryTable).values({
+      projectId: project.id,
+      ...healthFromFinance(updatedFinance),
+    });
+  }
   res.json(decision);
 });
 

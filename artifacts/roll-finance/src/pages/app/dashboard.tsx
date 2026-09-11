@@ -2,14 +2,13 @@ import { useGetProjectDashboard } from "@workspace/api-client-react";
 import { Loader2, TrendingUp, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
-
-// Demo project ID for mockup purposes
-const DEMO_PROJECT_ID = "demo-1";
+import { useActiveProject } from "@/lib/project-context";
 
 export default function Dashboard() {
-  const { data: dashboard, isLoading, error } = useGetProjectDashboard(DEMO_PROJECT_ID);
+  const { projectId, activeProject, isLoading: isProjectLoading, error: projectError } = useActiveProject();
+  const { data: dashboard, isLoading, error } = useGetProjectDashboard(projectId ?? "");
 
-  if (isLoading) {
+  if (isProjectLoading || isLoading) {
     return (
       <div className="h-[80vh] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -17,7 +16,7 @@ export default function Dashboard() {
     );
   }
 
-  if (error || !dashboard) {
+  if (projectError || error || !dashboard) {
     return (
       <div className="h-[80vh] flex flex-col items-center justify-center text-center">
         <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
@@ -69,10 +68,20 @@ export default function Dashboard() {
           <div className="relative z-10">
             <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">Total Budget</div>
             <div className="font-serif text-5xl md:text-6xl text-primary mb-2">
-              ${totals.totalBudget.toLocaleString()}
+               {activeProject?.currency} {totals.totalBudget.toLocaleString()}
             </div>
             <div className="text-sm text-muted-foreground">
               {dashboard.project.currency}
+            </div>
+            <div className="flex gap-8 mt-6 pt-5 border-t border-border/60">
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Spent</div>
+                <div className="font-serif text-xl">{activeProject?.currency} {totals.spent.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Committed</div>
+                <div className="font-serif text-xl">{activeProject?.currency} {totals.committed.toLocaleString()}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -80,7 +89,7 @@ export default function Dashboard() {
         <div className="p-8 border border-border bg-card flex flex-col justify-center">
           <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">Available</div>
           <div className="font-serif text-3xl mb-1">
-            ${totals.actuallyAvailable.toLocaleString()}
+            {activeProject?.currency} {totals.actuallyAvailable.toLocaleString()}
           </div>
           <div className="w-full bg-accent h-1 mt-4">
             <div 
@@ -93,7 +102,7 @@ export default function Dashboard() {
         <div className="p-8 border border-border bg-card flex flex-col justify-center">
           <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">Forecast Final</div>
           <div className="font-serif text-3xl mb-1">
-            ${totals.forecastFinalCost.toLocaleString()}
+            {activeProject?.currency} {totals.forecastFinalCost.toLocaleString()}
           </div>
           <div className={cn(
             "text-xs font-semibold uppercase tracking-widest mt-4",
@@ -173,7 +182,7 @@ export default function Dashboard() {
                 <div key={payment.id} className="p-4 border border-border bg-card hover:border-primary/50 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div className="font-semibold text-sm truncate pr-4">{payment.recipient}</div>
-                    <div className="font-serif text-lg text-primary">${payment.amount.toLocaleString()}</div>
+                     <div className="font-serif text-lg text-primary">{activeProject?.currency} {payment.amount.toLocaleString()}</div>
                   </div>
                   <div className="flex justify-between items-center text-xs text-muted-foreground uppercase tracking-wider">
                     <span>{payment.label}</span>
