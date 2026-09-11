@@ -1,0 +1,5 @@
+<svg width="240" height="72" viewBox="0 0 240 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="72" height="72" fill="#C99722"/>
+  <path d="M18 18H46C53.732 18 60 24.268 60 32C60 39.732 53.732 46 46 46H37L55 58H39L22 46H18V18ZM30 29V36H45C46.933 36 48.5 34.433 48.5 32.5C48.5 30.567 46.933 29 45 29H30Z" fill="#0A0A0A"/>
+  <text x="88" y="48" fill="#F5F2EA" font-family="Georgia, serif" font-size="36" font-weight="700" letter-spacing="8">ROLL</text>
+</svg>

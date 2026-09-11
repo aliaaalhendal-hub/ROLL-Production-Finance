@@ -1,6 +1,6 @@
-# [Project name]
+# ROLL — Finance Behind the Frame
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A cinematic production-finance operating system that shows producers the true financial impact of a decision before approval.
 
 ## Run & Operate
 
@@ -22,19 +22,25 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/roll-finance` — React web app and cinematic visual system
+- `artifacts/api-server/src/routes/roll.ts` — ROLL API and central finance calculations
+- `lib/api-spec/openapi.yaml` — source of truth for API contracts
+- `lib/db/src/schema/roll.ts` — production finance database schema
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- All financial summaries derive from one server-side calculation engine; screens must not invent totals.
+- Clerk owns authentication and API records are scoped to the signed-in Clerk user.
+- Payments are test-mode only until a real production payment provider is explicitly configured.
+- Decision simulations remain non-mutating until the user explicitly approves them.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Public cinematic project showcase, authenticated production workspaces, budgets, expenses, contracts and installment schedules, payment requests, test payments, equipment assets, cash flow, financial health, activity history, and ROLL AI decision-impact simulations.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- The imported Stitch design is the final visual direction. Do not replace it with a generic dashboard or simplify its typography, spacing, imagery, hierarchy, or art direction.
 
 ## Gotchas
 
