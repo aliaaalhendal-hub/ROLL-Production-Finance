@@ -585,6 +585,113 @@ export const CreatePaymentRequestResponse = zod.object({
 
 
 /**
+ * @summary List production invoices
+ */
+export const ListInvoicesParams = zod.object({
+  "projectId": zod.coerce.string()
+})
+
+export const ListInvoicesResponseItem = zod.object({
+  "id": zod.string(),
+  "invoiceNumber": zod.string(),
+  "vendor": zod.string(),
+  "contractId": zod.string().nullish(),
+  "department": zod.string(),
+  "description": zod.string(),
+  "amount": zod.number(),
+  "issueDate": zod.coerce.date(),
+  "dueDate": zod.coerce.date(),
+  "attachmentPath": zod.string().nullish(),
+  "status": zod.string()
+})
+export const ListInvoicesResponse = zod.array(ListInvoicesResponseItem)
+
+
+/**
+ * @summary Create an invoice
+ */
+export const CreateInvoiceParams = zod.object({
+  "projectId": zod.coerce.string()
+})
+
+export const createInvoiceBodyAmountMin = 0;
+
+
+
+export const CreateInvoiceBody = zod.object({
+  "invoiceNumber": zod.string(),
+  "vendor": zod.string(),
+  "contractId": zod.string().nullish(),
+  "department": zod.string(),
+  "description": zod.string().optional(),
+  "amount": zod.number().min(createInvoiceBodyAmountMin),
+  "issueDate": zod.coerce.date(),
+  "dueDate": zod.coerce.date(),
+  "attachmentPath": zod.string().nullish(),
+  "status": zod.string().optional()
+})
+
+export const CreateInvoiceResponse = zod.object({
+  "id": zod.string(),
+  "invoiceNumber": zod.string(),
+  "vendor": zod.string(),
+  "contractId": zod.string().nullish(),
+  "department": zod.string(),
+  "description": zod.string(),
+  "amount": zod.number(),
+  "issueDate": zod.coerce.date(),
+  "dueDate": zod.coerce.date(),
+  "attachmentPath": zod.string().nullish(),
+  "status": zod.string()
+})
+
+
+export const UpdateInvoiceParams = zod.object({
+  "projectId": zod.coerce.string(),
+  "invoiceId": zod.coerce.string()
+})
+
+export const updateInvoiceBodyOneAmountMin = 0;
+
+
+
+export const UpdateInvoiceBody = zod.object({
+  "invoiceNumber": zod.string(),
+  "vendor": zod.string(),
+  "contractId": zod.string().nullish(),
+  "department": zod.string(),
+  "description": zod.string().optional(),
+  "amount": zod.number().min(updateInvoiceBodyOneAmountMin),
+  "issueDate": zod.coerce.date(),
+  "dueDate": zod.coerce.date(),
+  "attachmentPath": zod.string().nullish(),
+  "status": zod.string().optional()
+}).describe('All invoice fields are optional when updating')
+
+export const UpdateInvoiceResponse = zod.object({
+  "id": zod.string(),
+  "invoiceNumber": zod.string(),
+  "vendor": zod.string(),
+  "contractId": zod.string().nullish(),
+  "department": zod.string(),
+  "description": zod.string(),
+  "amount": zod.number(),
+  "issueDate": zod.coerce.date(),
+  "dueDate": zod.coerce.date(),
+  "attachmentPath": zod.string().nullish(),
+  "status": zod.string()
+})
+
+
+export const DeleteInvoiceParams = zod.object({
+  "projectId": zod.coerce.string(),
+  "invoiceId": zod.coerce.string()
+})
+
+export const DeleteInvoiceResponse = zod.void()
+
+
+/**
  * @summary Update a payment request
  */
 export const UpdatePaymentRequestParams = zod.object({

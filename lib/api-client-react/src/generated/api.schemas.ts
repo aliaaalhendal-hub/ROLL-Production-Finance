@@ -227,6 +227,43 @@ export interface ContractUpdate {
   paymentSchedule?: ContractPaymentInput[];
 }
 
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  vendor: string;
+  /** @nullable */
+  contractId?: string | null;
+  department: string;
+  description: string;
+  amount: number;
+  issueDate: string;
+  dueDate: string;
+  /** @nullable */
+  attachmentPath?: string | null;
+  status: string;
+}
+
+export interface InvoiceInput {
+  invoiceNumber: string;
+  vendor: string;
+  /** @nullable */
+  contractId?: string | null;
+  department: string;
+  description?: string;
+  /** @minimum 0 */
+  amount: number;
+  issueDate: string;
+  dueDate: string;
+  /** @nullable */
+  attachmentPath?: string | null;
+  status?: string;
+}
+
+/**
+ * All invoice fields are optional when updating
+ */
+export type InvoiceUpdate = InvoiceInput;
+
 export interface PaymentRequest {
   id: string;
   recipient: string;

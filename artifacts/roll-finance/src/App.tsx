@@ -17,6 +17,8 @@ import Dashboard from '@/pages/app/dashboard';
 import Budgets from '@/pages/app/budgets';
 import Expenses from '@/pages/app/expenses';
 import Contracts from '@/pages/app/contracts';
+import Invoices from '@/pages/app/invoices';
+import Approvals from '@/pages/app/approvals';
 import PaymentRequests from '@/pages/app/payment-requests';
 import Payments from '@/pages/app/payments';
 import CashFlow from '@/pages/app/cash-flow';
@@ -24,6 +26,8 @@ import Assets from '@/pages/app/assets';
 import AiSimulation from '@/pages/app/ai-simulation';
 import History from '@/pages/app/history';
 import Settings from '@/pages/app/settings';
+
+import { I18nProvider } from '@/lib/i18n';
 
 const queryClient = new QueryClient();
 
@@ -111,6 +115,8 @@ function AppRoutes() {
         <Route path="/app/budget" component={Budgets} />
         <Route path="/app/expenses" component={Expenses} />
         <Route path="/app/contracts" component={Contracts} />
+        <Route path="/app/invoices" component={Invoices} />
+        <Route path="/app/approvals" component={Approvals} />
         <Route path="/app/requests" component={PaymentRequests} />
         <Route path="/app/payments" component={Payments} />
         <Route path="/app/cash-flow" component={CashFlow} />
@@ -212,12 +218,14 @@ function ClerkProviderWithRoutes() {
 
 function App() {
   return (
-    <TooltipProvider>
-      <WouterRouter base={basePath}>
-        <ClerkProviderWithRoutes />
-      </WouterRouter>
-      <Toaster />
-    </TooltipProvider>
+    <I18nProvider>
+      <TooltipProvider>
+        <WouterRouter base={basePath}>
+          <ClerkProviderWithRoutes />
+        </WouterRouter>
+        <Toaster />
+      </TooltipProvider>
+    </I18nProvider>
   );
 }
 

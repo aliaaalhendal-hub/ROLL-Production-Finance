@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useActiveProject } from "@/lib/project-context";
+import { useTranslation } from "@/lib/i18n";
 
 const projectSchema = z.object({
   name: z.string().min(1),
@@ -24,6 +25,7 @@ export default function Settings() {
   const { data: project, isLoading, refetch } = useGetProject(projectId ?? "");
   const updateProject = useUpdateProject();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const form = useForm<z.infer<typeof projectSchema>>({
     resolver: zodResolver(projectSchema),
@@ -36,18 +38,27 @@ export default function Settings() {
       endDate: project.endDate.split('T')[0],
       totalBudget: project.totalBudget,
       productionDays: project.productionDays
-    } : undefined
+    } : {
+      name: "",
+      type: "",
+      location: "",
+      currency: "",
+      startDate: "",
+      endDate: "",
+      totalBudget: 0,
+      productionDays: 1,
+    }
   });
 
   const onSubmit = async (values: z.infer<typeof projectSchema>) => {
     if (!projectId) return;
     try {
       await updateProject.mutateAsync({ projectId, data: values });
-      toast({ title: "Settings Saved", description: "Project configuration updated successfully." });
+      toast({ title: t("settings.savedTitle"), description: t("settings.savedDesc") });
       await refetch();
       await refetchProjects();
     } catch (e) {
-      toast({ title: "Error", description: "Failed to save settings.", variant: "destructive" });
+      toast({ title: t("settings.errorTitle"), description: t("settings.errorDesc"), variant: "destructive" });
     }
   };
 
@@ -57,8 +68,8 @@ export default function Settings() {
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 max-w-4xl">
       <div className="flex justify-between items-end border-b border-border pb-6">
         <div>
-          <h1 className="font-serif text-4xl mb-2">Project Settings</h1>
-          <p className="text-muted-foreground font-light">Configure production details and base financial parameters.</p>
+          <h1 className="font-serif text-4xl mb-2">{t("settings.title")}</h1>
+          <p className="text-muted-foreground font-light">{t("settings.subtitle")}</p>
         </div>
       </div>
 
@@ -67,44 +78,44 @@ export default function Settings() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             
             <div className="space-y-4">
-              <h2 className="font-serif text-2xl border-b border-border pb-2">General Info</h2>
+              <h2 className="font-serif text-2xl border-b border-border pb-2">{t("settings.generalInfo")}</h2>
               <div className="grid md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="name" render={({ field }) => (
-                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">Production Name</FormLabel>
+                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">{t("settings.prodName")}</FormLabel>
                   <FormControl><input {...field} className="w-full bg-input border-border border p-3 rounded-none focus:outline-none focus:border-primary" /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="type" render={({ field }) => (
-                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">Type</FormLabel>
+                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">{t("settings.type")}</FormLabel>
                   <FormControl><input {...field} className="w-full bg-input border-border border p-3 rounded-none focus:outline-none focus:border-primary" /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="location" render={({ field }) => (
-                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">Primary Location</FormLabel>
+                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">{t("settings.primaryLoc")}</FormLabel>
                   <FormControl><input {...field} className="w-full bg-input border-border border p-3 rounded-none focus:outline-none focus:border-primary" /></FormControl></FormItem>
                 )} />
               </div>
             </div>
 
             <div className="space-y-4">
-              <h2 className="font-serif text-2xl border-b border-border pb-2">Financials & Schedule</h2>
+              <h2 className="font-serif text-2xl border-b border-border pb-2">{t("settings.financials")}</h2>
               <div className="grid md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="currency" render={({ field }) => (
-                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">Base Currency</FormLabel>
+                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">{t("settings.currency")}</FormLabel>
                   <FormControl><input {...field} className="w-full bg-input border-border border p-3 rounded-none focus:outline-none focus:border-primary" /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="totalBudget" render={({ field }) => (
-                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">Total Master Budget</FormLabel>
+                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">{t("settings.totalBudget")}</FormLabel>
                   <FormControl><input type="number" {...field} className="w-full bg-input border-border border p-3 rounded-none focus:outline-none focus:border-primary" /></FormControl></FormItem>
                 )} />
                  <FormField control={form.control} name="startDate" render={({ field }) => (
-                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">Start Date</FormLabel>
+                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">{t("settings.startDate")}</FormLabel>
                   <FormControl><input type="date" {...field} className="w-full bg-input border-border border p-3 rounded-none focus:outline-none focus:border-primary" /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="endDate" render={({ field }) => (
-                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">End Date</FormLabel>
+                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">{t("settings.endDate")}</FormLabel>
                   <FormControl><input type="date" {...field} className="w-full bg-input border-border border p-3 rounded-none focus:outline-none focus:border-primary" /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="productionDays" render={({ field }) => (
-                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">Total Shoot Days</FormLabel>
+                  <FormItem><FormLabel className="text-xs uppercase tracking-widest">{t("settings.shootDays")}</FormLabel>
                   <FormControl><input type="number" {...field} className="w-full bg-input border-border border p-3 rounded-none focus:outline-none focus:border-primary" /></FormControl></FormItem>
                 )} />
               </div>
@@ -117,7 +128,7 @@ export default function Settings() {
                 className="bg-primary text-primary-foreground px-8 py-4 font-semibold uppercase tracking-widest hover:bg-primary/90 transition-colors flex items-center gap-2"
               >
                 {updateProject.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save Configuration
+                {t("settings.saveConfig")}
               </button>
             </div>
           </form>

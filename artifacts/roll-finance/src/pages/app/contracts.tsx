@@ -5,11 +5,14 @@ import {
   useListContracts,
   useProcessPayment,
 } from "@workspace/api-client-react";
-import { Loader2, FileText, Download, Plus } from "lucide-react";
+import { Loader2, FileText, Download, Plus, Trash2, Upload } from "lucide-react";
 import { useActiveProject } from "@/lib/project-context";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuthenticatedDelete } from "@/lib/use-authenticated-delete";
+import { useUploadFile } from "@/lib/use-upload-file";
+import { useTranslation } from "@/lib/i18n";
 
 export default function Contracts() {
   const { projectId, activeProject, isLoading: isProjectLoading } = useActiveProject();
@@ -19,7 +22,12 @@ export default function Contracts() {
   const createPayment = useCreatePayment();
   const processPayment = useProcessPayment();
   const queryClient = useQueryClient();
+  const { mutateAsync: deleteContract } = useAuthenticatedDelete();
+  const uploadFile = useUploadFile();
+  const { t, tStatus } = useTranslation();
+  
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingInstallment, setPendingInstallment] = useState<{
     contractId: string;
     contractTitle: string;
@@ -37,6 +45,7 @@ export default function Contracts() {
     endDate: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
     status: "ACTIVE",
     notes: "",
+    documentPath: "",
   });
 
   const submitContract = async (event: React.FormEvent) => {
@@ -83,33 +92,56 @@ export default function Contracts() {
     await queryClient.invalidateQueries();
   };
 
+  const handleDelete = async (contractId: string) => {
+    if (!projectId) return;
+    if (window.confirm(t("common.deleteConfirm") || "Are you sure you want to delete this?")) {
+      try {
+        await deleteContract(`/api/projects/${projectId}/contracts/${contractId}`);
+        refetch();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const path = await uploadFile.mutateAsync(file);
+      setForm((current) => ({ ...current, documentPath: path }));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   if (isProjectLoading || isLoading) return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20">
       <div className="flex justify-between items-end border-b border-border pb-6">
         <div>
-          <h1 className="font-serif text-4xl mb-2">Contracts</h1>
-          <p className="text-muted-foreground font-light">Crew, cast, and vendor agreements with payment schedules.</p>
+          <h1 className="font-serif text-4xl mb-2">{t("contracts.title")}</h1>
+          <p className="text-muted-foreground font-light">{t("contracts.subtitle")}</p>
         </div>
         <button
           type="button"
           onClick={() => setIsCreateOpen(true)}
           className="bg-primary text-primary-foreground px-6 py-3 text-xs font-semibold uppercase tracking-widest hover:bg-primary/90 transition-colors flex items-center gap-2"
         >
-          <Plus className="w-4 h-4" /> Create Contract
+          <Plus className="w-4 h-4" /> {t("contracts.create")}
         </button>
       </div>
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-2xl bg-card border border-border rounded-none">
-          <DialogHeader><DialogTitle className="font-serif text-2xl">Create Contract</DialogTitle></DialogHeader>
-          <form onSubmit={submitContract} className="grid grid-cols-2 gap-4 pt-4">
+        <DialogContent className="sm:max-w-2xl bg-card border border-border rounded-none max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-serif text-2xl">{t("contracts.create")}</DialogTitle></DialogHeader>
+          <form onSubmit={submitContract} className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
             {[
-              ["title", "Contract Title"],
-              ["party", "Contract Party"],
-              ["role", "Role / Service"],
-              ["department", "Department"],
+              ["title", t("common.title")],
+              ["party", t("contract.party")],
+              ["role", t("contract.role")],
+              ["department", t("common.department")],
             ].map(([name, label]) => (
               <label key={name} className="space-y-2 text-xs uppercase tracking-widest">
                 <span>{label}</span>
@@ -122,29 +154,42 @@ export default function Contracts() {
               </label>
             ))}
             <label className="space-y-2 text-xs uppercase tracking-widest">
-              <span>Contract Value ({activeProject?.currency})</span>
+              <span>{t("contract.value")} ({activeProject?.currency})</span>
               <input required min="1" type="number" value={form.value} onChange={(event) => setForm({ ...form, value: Number(event.target.value) })} className="w-full bg-input border border-border p-3 text-foreground" />
             </label>
             <label className="space-y-2 text-xs uppercase tracking-widest">
-              <span>Status</span>
+              <span>{t("common.status")}</span>
               <select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })} className="w-full bg-input border border-border p-3 text-foreground">
-                <option>DRAFT</option><option>ACTIVE</option><option>COMPLETED</option><option>CANCELLED</option>
+                <option value="DRAFT">{tStatus("DRAFT")}</option>
+                <option value="ACTIVE">{tStatus("ACTIVE")}</option>
+                <option value="COMPLETED">{tStatus("COMPLETED")}</option>
+                <option value="CANCELLED">{tStatus("CANCELLED")}</option>
               </select>
             </label>
             <label className="space-y-2 text-xs uppercase tracking-widest">
-              <span>Start Date</span>
+              <span>{t("contract.startDate")}</span>
               <input required type="date" value={form.startDate} onChange={(event) => setForm({ ...form, startDate: event.target.value })} className="w-full bg-input border border-border p-3 text-foreground" />
             </label>
             <label className="space-y-2 text-xs uppercase tracking-widest">
-              <span>End Date</span>
+              <span>{t("contract.endDate")}</span>
               <input required type="date" value={form.endDate} onChange={(event) => setForm({ ...form, endDate: event.target.value })} className="w-full bg-input border border-border p-3 text-foreground" />
             </label>
             <label className="col-span-2 space-y-2 text-xs uppercase tracking-widest">
-              <span>Notes</span>
+              <span>{t("common.notes")}</span>
               <textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} className="w-full bg-input border border-border p-3 text-foreground normal-case tracking-normal" />
             </label>
-            <button disabled={createContract.isPending} className="col-span-2 bg-primary text-primary-foreground p-4 text-sm font-semibold uppercase tracking-widest">
-              {createContract.isPending ? "Creating..." : "Create Contract"}
+            <label className="col-span-2 space-y-2 text-xs uppercase tracking-widest">
+              <span>{t("contract.docUrl")}</span>
+              <div className="flex gap-2">
+                <input type="text" value={form.documentPath} onChange={(event) => setForm({ ...form, documentPath: event.target.value })} className="w-full bg-input border border-border p-3 text-foreground normal-case tracking-normal" placeholder="" />
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="bg-accent px-4 flex items-center justify-center border border-border hover:bg-border transition-colors">
+                  {uploadFile.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                </button>
+                <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+              </div>
+            </label>
+            <button disabled={createContract.isPending || uploadFile.isPending} className="col-span-2 bg-primary text-primary-foreground p-4 text-sm font-semibold uppercase tracking-widest">
+              {createContract.isPending ? t("contract.creating") : t("contract.create")}
             </button>
           </form>
         </DialogContent>
@@ -161,23 +206,23 @@ export default function Contracts() {
               </div>
               <div className="text-right">
                  <div className="font-serif text-2xl text-foreground">{contract.currency} {contract.value.toLocaleString()}</div>
-                <div className="text-xs uppercase tracking-widest text-muted-foreground">{contract.status}</div>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground">{tStatus(contract.status)}</div>
               </div>
             </div>
             
             <div className="p-6 bg-background/50">
-              <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Payment Schedule</div>
+              <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">{t("contract.schedule")}</div>
               <div className="space-y-3">
                 {contract.paymentSchedule.map(payment => (
                   <div key={payment.id} className="flex justify-between items-center text-sm border-b border-border/50 pb-2 last:border-0 last:pb-0">
                     <div>
-                      <span className="font-medium mr-4">{payment.label}</span>
+                       <span className="font-medium mr-4">{payment.label.replace(/INSTALLMENT/i, t("contract.installment"))}</span>
                       <span className="text-muted-foreground">{new Date(payment.dueDate).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center gap-4">
                        <span className="font-serif">{contract.currency} {payment.amount.toLocaleString()}</span>
                       <span className="text-xs px-2 py-0.5 border border-border uppercase tracking-wider bg-card">
-                         {payment.status}
+                         {tStatus(payment.status)}
                       </span>
                        {payment.status.toLowerCase() !== "paid" && (
                          <button
@@ -191,7 +236,7 @@ export default function Contracts() {
                            })}
                            className="text-xs uppercase tracking-widest text-primary font-semibold"
                          >
-                           Pay
+                           {t("contract.pay")}
                          </button>
                        )}
                     </div>
@@ -202,36 +247,43 @@ export default function Contracts() {
 
             <div className="p-4 border-t border-border flex justify-between items-center bg-card">
               <div className="text-sm">
-                <span className="text-muted-foreground mr-2">Remaining:</span>
+                <span className="text-muted-foreground mr-2">{t("common.remaining")}:</span>
                  <span className="font-serif text-primary text-lg">{activeProject?.currency} {contract.remainingAmount.toLocaleString()}</span>
               </div>
-              <button className="flex items-center gap-2 text-xs uppercase tracking-widest text-foreground hover:text-primary transition-colors font-semibold">
-                <Download className="w-4 h-4" /> Doc
-              </button>
+              <div className="flex gap-4 items-center">
+                {contract.documentPath && (
+                  <a href={contract.documentPath.startsWith("/objects") ? `/api${contract.documentPath}` : contract.documentPath} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs uppercase tracking-widest text-foreground hover:text-primary transition-colors font-semibold">
+                    <Download className="w-4 h-4" /> {t("common.viewAttachment")}
+                  </a>
+                )}
+                <button onClick={() => handleDelete(contract.id)} className="text-destructive hover:text-destructive/80 transition-colors ml-4 p-2">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         ))}
         {contracts?.length === 0 && (
           <div className="col-span-full p-12 text-center border border-border border-dashed text-muted-foreground font-light">
             <FileText className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            No contracts found.
+            {t("empty.contracts")}
           </div>
         )}
       </div>
 
       <Dialog open={Boolean(pendingInstallment)} onOpenChange={(open) => !open && setPendingInstallment(null)}>
         <DialogContent className="sm:max-w-lg bg-card border border-border rounded-none">
-          <DialogHeader><DialogTitle className="font-serif text-2xl">Confirm Test Payment</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-serif text-2xl">{t("payment.confirm")}</DialogTitle></DialogHeader>
           {pendingInstallment && (
             <div className="space-y-4 pt-4">
               {[
-                ["Recipient", pendingInstallment.recipient],
-                ["Amount", `${activeProject?.currency} ${pendingInstallment.amount.toLocaleString()}`],
-                ["Reason", `${pendingInstallment.contractTitle} installment`],
-                ["Related Contract", pendingInstallment.contractTitle],
-                ["Available Before Payment", `${activeProject?.currency} ${(dashboard?.totals.actuallyAvailable ?? 0).toLocaleString()}`],
-                ["Available After Payment", `${activeProject?.currency} ${((dashboard?.totals.actuallyAvailable ?? 0) - pendingInstallment.amount).toLocaleString()}`],
-                ["ROLL AI Risk", pendingInstallment.amount > (dashboard?.totals.actuallyAvailable ?? 0) * 0.15 ? "MODERATE" : "LOW"],
+                [t("payment.recipient"), pendingInstallment.recipient],
+                [t("common.amount"), `${activeProject?.currency} ${pendingInstallment.amount.toLocaleString()}`],
+                [t("payment.reason"), `${pendingInstallment.contractTitle} installment`],
+                [t("payment.related"), pendingInstallment.contractTitle],
+                [t("payment.availableBefore"), `${activeProject?.currency} ${(dashboard?.totals.actuallyAvailable ?? 0).toLocaleString()}`],
+                [t("payment.availableAfter"), `${activeProject?.currency} ${((dashboard?.totals.actuallyAvailable ?? 0) - pendingInstallment.amount).toLocaleString()}`],
+                [t("payment.risk"), pendingInstallment.amount > (dashboard?.totals.actuallyAvailable ?? 0) * 0.15 ? "MODERATE" : "LOW"],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between gap-6 border-b border-border pb-3 text-sm">
                   <span className="text-muted-foreground uppercase tracking-widest text-xs">{label}</span>
@@ -239,9 +291,9 @@ export default function Contracts() {
                 </div>
               ))}
               <div className="flex gap-4 pt-3">
-                <button type="button" onClick={() => setPendingInstallment(null)} className="flex-1 border border-border p-3 text-xs uppercase tracking-widest font-semibold">Cancel</button>
+                <button type="button" onClick={() => setPendingInstallment(null)} className="flex-1 border border-border p-3 text-xs uppercase tracking-widest font-semibold">{t("common.cancel")}</button>
                 <button type="button" disabled={createPayment.isPending || processPayment.isPending} onClick={confirmInstallmentPayment} className="flex-1 bg-primary text-primary-foreground p-3 text-xs uppercase tracking-widest font-semibold">
-                  {createPayment.isPending || processPayment.isPending ? "Processing..." : "Confirm Payment"}
+                  {createPayment.isPending || processPayment.isPending ? t("payment.process") : t("payment.confirmBtn")}
                 </button>
               </div>
             </div>

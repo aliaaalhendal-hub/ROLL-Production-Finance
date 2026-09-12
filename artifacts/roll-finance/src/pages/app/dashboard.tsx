@@ -1,12 +1,15 @@
-import { useGetProjectDashboard } from "@workspace/api-client-react";
-import { Loader2, TrendingUp, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import { useGetProjectDashboard, useGetFinancialHealth } from "@workspace/api-client-react";
+import { Loader2, TrendingUp, AlertTriangle, Info, CheckCircle2, ActivitySquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 import { useActiveProject } from "@/lib/project-context";
+import { useTranslation } from "@/lib/i18n";
 
 export default function Dashboard() {
   const { projectId, activeProject, isLoading: isProjectLoading, error: projectError } = useActiveProject();
   const { data: dashboard, isLoading, error } = useGetProjectDashboard(projectId ?? "");
+  const { data: health } = useGetFinancialHealth(projectId ?? "");
+  const { t } = useTranslation();
 
   if (isProjectLoading || isLoading) {
     return (
@@ -45,7 +48,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-10 pb-20 animate-in fade-in duration-700">
+    <div className="w-full min-w-0 space-y-10 pb-20 animate-in fade-in duration-700">
       
       {/* Header */}
       <div>
@@ -66,7 +69,7 @@ export default function Dashboard() {
             <TrendingUp className="w-32 h-32" />
           </div>
           <div className="relative z-10">
-            <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">Total Budget</div>
+            <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">{t("dashboard.totalBudget")}</div>
             <div className="font-serif text-5xl md:text-6xl text-primary mb-2">
                {activeProject?.currency} {totals.totalBudget.toLocaleString()}
             </div>
@@ -75,11 +78,11 @@ export default function Dashboard() {
             </div>
             <div className="flex gap-8 mt-6 pt-5 border-t border-border/60">
               <div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Spent</div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("dashboard.spent")}</div>
                 <div className="font-serif text-xl">{activeProject?.currency} {totals.spent.toLocaleString()}</div>
               </div>
               <div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Committed</div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("dashboard.committed")}</div>
                 <div className="font-serif text-xl">{activeProject?.currency} {totals.committed.toLocaleString()}</div>
               </div>
             </div>
@@ -87,7 +90,7 @@ export default function Dashboard() {
         </div>
 
         <div className="p-8 border border-border bg-card flex flex-col justify-center">
-          <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">Available</div>
+          <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">{t("dashboard.available")}</div>
           <div className="font-serif text-3xl mb-1">
             {activeProject?.currency} {totals.actuallyAvailable.toLocaleString()}
           </div>
@@ -100,7 +103,7 @@ export default function Dashboard() {
         </div>
 
         <div className="p-8 border border-border bg-card flex flex-col justify-center">
-          <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">Forecast Final</div>
+          <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">{t("dashboard.forecast")}</div>
           <div className="font-serif text-3xl mb-1">
             {activeProject?.currency} {totals.forecastFinalCost.toLocaleString()}
           </div>
@@ -108,47 +111,111 @@ export default function Dashboard() {
             "text-xs font-semibold uppercase tracking-widest mt-4",
             totals.forecastFinalCost > totals.totalBudget ? "text-destructive" : "text-green-500"
           )}>
-            {totals.forecastFinalCost > totals.totalBudget ? 'Over Budget' : 'On Track'}
+            {totals.forecastFinalCost > totals.totalBudget ? t("dashboard.overBudget") : t("dashboard.onTrack")}
           </div>
         </div>
       </div>
 
       {/* Main Grid: AI Insights & Progress */}
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid min-w-0 md:grid-cols-3 gap-6">
         
-        {/* AI Insights */}
-        <div className="md:col-span-2 space-y-4">
-          <div className="flex items-center justify-between border-b border-border pb-4">
-            <h2 className="font-serif text-2xl">ROLL AI Insights</h2>
-          </div>
-          
-          <div className="grid gap-4">
-            {insights.map((insight) => {
-              const Icon = getInsightIcon(insight.severity);
-              const colorClass = getInsightColor(insight.severity);
-              
-              return (
-                <div key={insight.id} className={cn("p-6 border flex gap-4 items-start", colorClass)}>
-                  <Icon className="w-6 h-6 shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-serif text-xl mb-2">{insight.title}</h3>
-                    <p className="text-sm opacity-90 leading-relaxed font-light">{insight.message}</p>
+        {/* AI Insights & Department Variance */}
+        <div className="min-w-0 md:col-span-2 space-y-10">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <h2 className="font-serif text-2xl">{t("dashboard.aiInsights")}</h2>
+            </div>
+            
+            <div className="grid gap-4">
+              {insights.map((insight) => {
+                const Icon = getInsightIcon(insight.severity);
+                const colorClass = getInsightColor(insight.severity);
+                
+                return (
+                  <div key={insight.id} className={cn("p-6 border flex gap-4 items-start", colorClass)}>
+                    <Icon className="w-6 h-6 shrink-0 mt-1" />
+                    <div>
+                      <h3 className="font-serif text-xl mb-2">{insight.title}</h3>
+                      <p className="text-sm opacity-90 leading-relaxed font-light">{insight.message}</p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+            
+            <div className="pt-4">
+               <Link href="/app/ai" className="text-xs font-semibold uppercase tracking-widest text-primary hover:text-primary/80 flex items-center gap-2">
+                 {t("dashboard.openEngine")} &rarr;
+               </Link>
+            </div>
           </div>
-          
-          <div className="pt-4">
-             <Link href="/app/ai" className="text-xs font-semibold uppercase tracking-widest text-primary hover:text-primary/80 flex items-center gap-2">
-               Open Simulation Engine &rarr;
-             </Link>
+
+          <div className="space-y-4 border-t border-border pt-10">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <h2 className="font-serif text-2xl">Department Variance</h2>
+            </div>
+            <div className="w-full max-w-full overflow-x-auto">
+              <table className="min-w-[540px] w-full text-left text-sm">
+                <thead className="text-xs uppercase tracking-widest text-muted-foreground border-b border-border bg-background/50">
+                  <tr>
+                    <th className="p-3 font-semibold">Department</th>
+                    <th className="p-3 font-semibold text-right">Allocated</th>
+                    <th className="p-3 font-semibold text-right">Spent+Committed</th>
+                    <th className="p-3 font-semibold text-right">Variance</th>
+                    <th className="p-3 font-semibold text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {budgets.map(b => {
+                    const totalUsed = b.paid + b.committed;
+                    const variance = b.allocated - totalUsed;
+                    const status = variance < 0 ? "OVER BUDGET" : variance > 0 ? "UNDER BUDGET" : "ON TRACK";
+                    const statusColor = variance < 0 ? "text-destructive" : variance > 0 ? "text-green-500" : "text-primary";
+                    return (
+                      <tr key={b.id} className="hover:bg-accent/50 transition-colors">
+                        <td className="p-3 font-semibold">{b.department}</td>
+                        <td className="p-3 text-right">{activeProject?.currency} {b.allocated.toLocaleString()}</td>
+                        <td className="p-3 text-right">{activeProject?.currency} {totalUsed.toLocaleString()}</td>
+                        <td className="p-3 text-right">{activeProject?.currency} {Math.abs(variance).toLocaleString()}</td>
+                        <td className={`p-3 text-right text-xs uppercase tracking-widest font-bold ${statusColor}`}>
+                          {status}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
         {/* Sidebar: Progress & Upcoming */}
         <div className="space-y-10">
           
+          {/* Health Score */}
+          {health && (
+            <div className="p-6 border border-border bg-card">
+              <h3 className="font-serif text-xl mb-4 flex items-center gap-2">
+                <ActivitySquare className="w-5 h-5 text-primary" /> Financial Health
+              </h3>
+              <div className="flex items-end justify-between mb-4">
+                <div className="font-serif text-5xl text-primary">{health.score}</div>
+                <div className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">{health.status}</div>
+              </div>
+              <div className="w-full bg-accent h-2 mb-4">
+                <div 
+                  className={cn("h-full", health.score > 70 ? "bg-green-500" : health.score > 40 ? "bg-yellow-500" : "bg-destructive")} 
+                  style={{ width: `${health.score}%` }}
+                />
+              </div>
+              <div className="space-y-1">
+                {health.factors.slice(0, 3).map((f: string, i: number) => (
+                  <div key={i} className="text-xs text-muted-foreground">• {f}</div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Production Progress */}
           <div className="p-6 border border-border bg-card">
             <h3 className="font-serif text-xl mb-6">Production Status</h3>
@@ -165,8 +232,11 @@ export default function Dashboard() {
                   />
                 </div>
               </div>
-              <div className="text-sm text-muted-foreground font-light">
-                Day {productionProgress.daysCompleted} of {productionProgress.totalDays}
+              <div className="flex justify-between text-sm text-muted-foreground font-light">
+                <span>Day {productionProgress.daysCompleted} of {productionProgress.totalDays}</span>
+                {productionProgress.daysCompleted > 0 && (
+                  <span>Cost/Day: {activeProject?.currency} {Math.round(totals.spent / productionProgress.daysCompleted).toLocaleString()}</span>
+                )}
               </div>
             </div>
           </div>

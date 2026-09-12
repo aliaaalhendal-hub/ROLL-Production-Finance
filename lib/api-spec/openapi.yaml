@@ -306,6 +306,62 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaymentRequest"
+  /projects/{projectId}/invoices:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: listInvoices
+      tags: [finance]
+      summary: List production invoices
+      responses:
+        "200":
+          description: Invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Invoice" }
+    post:
+      operationId: createInvoice
+      tags: [finance]
+      summary: Create an invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InvoiceInput" }
+      responses:
+        "201":
+          description: Created invoice
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Invoice" }
+  /projects/{projectId}/invoices/{invoiceId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - name: invoiceId
+        in: path
+        required: true
+        schema: { type: string }
+    patch:
+      operationId: updateInvoice
+      tags: [finance]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InvoiceUpdate" }
+      responses:
+        "200":
+          description: Updated invoice
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Invoice" }
+    delete:
+      operationId: deleteInvoice
+      tags: [finance]
+      responses:
+        "204": { description: Deleted }
   /projects/{projectId}/payment-requests/{requestId}:
     parameters:
       - $ref: "#/components/parameters/ProjectId"
@@ -755,6 +811,39 @@ components:
         amount: { type: number, minimum: 0 }
         dueDate: { type: string, format: date }
         status: { type: string }
+    Invoice:
+      type: object
+      required: [id, invoiceNumber, vendor, department, description, amount, issueDate, dueDate, status]
+      properties:
+        id: { type: string }
+        invoiceNumber: { type: string }
+        vendor: { type: string }
+        contractId: { type: ["string", "null"] }
+        department: { type: string }
+        description: { type: string }
+        amount: { type: number }
+        issueDate: { type: string, format: date }
+        dueDate: { type: string, format: date }
+        attachmentPath: { type: ["string", "null"] }
+        status: { type: string }
+    InvoiceInput:
+      type: object
+      required: [invoiceNumber, vendor, department, amount, issueDate, dueDate]
+      properties:
+        invoiceNumber: { type: string }
+        vendor: { type: string }
+        contractId: { type: ["string", "null"] }
+        department: { type: string }
+        description: { type: string }
+        amount: { type: number, minimum: 0 }
+        issueDate: { type: string, format: date }
+        dueDate: { type: string, format: date }
+        attachmentPath: { type: ["string", "null"] }
+        status: { type: string }
+    InvoiceUpdate:
+      allOf:
+        - $ref: "#/components/schemas/InvoiceInput"
+      description: All invoice fields are optional when updating
     PaymentRequest:
       type: object
       required: [id, recipient, description, amount, dueDate, department, status]

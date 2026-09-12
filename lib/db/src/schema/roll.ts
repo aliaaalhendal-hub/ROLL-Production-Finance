@@ -60,6 +60,7 @@ export const expensesTable = pgTable("expenses", {
   date: date("date", { mode: "string" }).notNull(),
   category: text("category").notNull(),
   notes: text("notes").notNull().default(""),
+  attachmentPath: text("attachment_path"),
   status: text("status").notNull(),
   ...timestamps,
 });
@@ -93,6 +94,22 @@ export const contractsTable = pgTable("contracts", {
   ...timestamps,
 });
 
+export const invoicesTable = pgTable("invoices", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").notNull(),
+  invoiceNumber: text("invoice_number").notNull(),
+  vendor: text("vendor").notNull(),
+  contractId: uuid("contract_id"),
+  department: text("department").notNull(),
+  description: text("description").notNull().default(""),
+  amount: doublePrecision("amount").notNull(),
+  issueDate: date("issue_date", { mode: "string" }).notNull(),
+  dueDate: date("due_date", { mode: "string" }).notNull(),
+  attachmentPath: text("attachment_path"),
+  status: text("status").notNull().default("RECEIVED"),
+  ...timestamps,
+});
+
 export const paymentRequestsTable = pgTable("payment_requests", {
   id: uuid("id").primaryKey().defaultRandom(),
   projectId: uuid("project_id").notNull(),
@@ -103,6 +120,7 @@ export const paymentRequestsTable = pgTable("payment_requests", {
   dueDate: date("due_date", { mode: "string" }).notNull(),
   department: text("department").notNull(),
   notes: text("notes").notNull().default(""),
+  attachmentPath: text("attachment_path"),
   status: text("status").notNull(),
   ...timestamps,
 });
@@ -115,10 +133,50 @@ export const paymentsTable = pgTable("payments", {
   amount: doublePrecision("amount").notNull(),
   relatedContractId: uuid("related_contract_id"),
   relatedExpenseId: uuid("related_expense_id"),
+  relatedInvoiceId: uuid("related_invoice_id"),
+  relatedRequestId: uuid("related_request_id"),
+  sourceType: text("source_type"),
+  sourceId: uuid("source_id"),
   status: text("status").notNull(),
   transactionReference: text("transaction_reference"),
   date: date("date", { mode: "string" }),
   mode: text("mode").notNull().default("TEST"),
+  method: text("method").notNull().default("KNET"),
+  ...timestamps,
+});
+
+export const transactionsTable = pgTable("transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").notNull(),
+  paymentId: uuid("payment_id").notNull().unique(),
+  reference: text("reference").notNull().unique(),
+  amount: doublePrecision("amount").notNull(),
+  method: text("method").notNull(),
+  status: text("status").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const approvalsTable = pgTable("approvals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: uuid("entity_id").notNull(),
+  status: text("status").notNull().default("PENDING"),
+  amount: doublePrecision("amount").notNull().default(0),
+  reviewer: text("reviewer"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const alertsTable = pgTable("alerts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").notNull(),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  severity: text("severity").notNull(),
+  entityType: text("entity_type"),
+  entityId: uuid("entity_id"),
+  readAt: timestamp("read_at", { withTimezone: true }),
   ...timestamps,
 });
 

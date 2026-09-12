@@ -11,8 +11,10 @@ import {
   db,
   expensesTable,
   financialHealthHistoryTable,
+  invoicesTable,
   paymentRequestsTable,
   paymentsTable,
+  transactionsTable,
   projectsTable,
   usersTable,
   type ContractPaymentRecord,
@@ -775,6 +777,15 @@ router.patch("/projects/:projectId/budgets/:budgetId", async (req, res): Promise
   res.json(budget);
 });
 
+router.delete("/projects/:projectId/budgets/:budgetId", async (req, res): Promise<void> => {
+  const project = await ownedProject(req.params.projectId, res.locals.userId as string);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  const [deleted] = await db.delete(budgetsTable).where(and(eq(budgetsTable.id, req.params.budgetId), eq(budgetsTable.projectId, project.id))).returning();
+  if (!deleted) { res.status(404).json({ error: "Budget not found" }); return; }
+  await addActivity(project.id, "Budget deleted", deleted.department);
+  res.sendStatus(204);
+});
+
 router.get("/projects/:projectId/expenses", async (req, res): Promise<void> => {
   const params = ListExpensesParams.safeParse(req.params);
   const project = params.success ? await ownedProject(params.data.projectId, res.locals.userId as string) : null;
@@ -830,6 +841,16 @@ router.patch("/projects/:projectId/expenses/:expenseId", async (req, res): Promi
   res.json(expense);
 });
 
+router.delete("/projects/:projectId/expenses/:expenseId", async (req, res): Promise<void> => {
+  const params = UpdateExpenseParams.safeParse(req.params);
+  const project = params.success ? await ownedProject(params.data.projectId, res.locals.userId as string) : null;
+  if (!project || !params.success) { res.status(400).json({ error: "Invalid expense" }); return; }
+  const [deleted] = await db.delete(expensesTable).where(and(eq(expensesTable.id, params.data.expenseId), eq(expensesTable.projectId, project.id))).returning();
+  if (!deleted) { res.status(404).json({ error: "Expense not found" }); return; }
+  await addActivity(project.id, "Expense deleted", deleted.title);
+  res.sendStatus(204);
+});
+
 router.get("/projects/:projectId/contracts", async (req, res): Promise<void> => {
   const params = ListContractsParams.safeParse(req.params);
   const project = params.success ? await ownedProject(params.data.projectId, res.locals.userId as string) : null;
@@ -866,6 +887,53 @@ router.post("/projects/:projectId/contracts", async (req, res): Promise<void> =>
     .returning();
   await addActivity(project.id, "Contract created", `${contract.title} activated at KWD ${contract.value.toLocaleString()}`);
   res.status(201).json({ ...contract, paidAmount: 0, remainingAmount: contract.value });
+});
+
+router.get("/projects/:projectId/invoices", async (req, res): Promise<void> => {
+  const project = await ownedProject(req.params.projectId, res.locals.userId as string);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  res.json(await db.select().from(invoicesTable).where(eq(invoicesTable.projectId, project.id)).orderBy(desc(invoicesTable.dueDate)));
+});
+
+router.post("/projects/:projectId/invoices", async (req, res): Promise<void> => {
+  const project = await ownedProject(req.params.projectId, res.locals.userId as string);
+  const input = req.body ?? {};
+  if (!project || !input.invoiceNumber || !input.vendor || !input.department || Number(input.amount) < 0 || !input.issueDate || !input.dueDate) {
+    res.status(400).json({ error: "Invalid invoice" }); return;
+  }
+  const [invoice] = await db.insert(invoicesTable).values({
+    projectId: project.id, invoiceNumber: String(input.invoiceNumber), vendor: String(input.vendor),
+    contractId: input.contractId || null, department: String(input.department),
+    description: String(input.description ?? ""), amount: Number(input.amount),
+    issueDate: calendar(input.issueDate), dueDate: calendar(input.dueDate),
+    attachmentPath: input.attachmentPath || null, status: String(input.status ?? "RECEIVED").toUpperCase(),
+  }).returning();
+  await addActivity(project.id, "Invoice created", `${invoice.invoiceNumber} — KWD ${invoice.amount.toLocaleString()}`);
+  res.status(201).json(invoice);
+});
+
+router.patch("/projects/:projectId/invoices/:invoiceId", async (req, res): Promise<void> => {
+  const project = await ownedProject(req.params.projectId, res.locals.userId as string);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  const input = req.body ?? {};
+  const changes: Record<string, unknown> = { ...input };
+  if (changes.issueDate) changes.issueDate = calendar(String(changes.issueDate));
+  if (changes.dueDate) changes.dueDate = calendar(String(changes.dueDate));
+  if (changes.status) changes.status = String(changes.status).toUpperCase();
+  if (changes.amount !== undefined) changes.amount = Number(changes.amount);
+  delete changes.id; delete changes.projectId; delete changes.createdAt; delete changes.updatedAt;
+  const [invoice] = await db.update(invoicesTable).set(changes).where(and(eq(invoicesTable.id, req.params.invoiceId), eq(invoicesTable.projectId, project.id))).returning();
+  if (!invoice) { res.status(404).json({ error: "Invoice not found" }); return; }
+  await addActivity(project.id, "Invoice updated", `${invoice.invoiceNumber} marked ${invoice.status}`);
+  res.json(invoice);
+});
+
+router.delete("/projects/:projectId/invoices/:invoiceId", async (req, res): Promise<void> => {
+  const project = await ownedProject(req.params.projectId, res.locals.userId as string);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  const [deleted] = await db.delete(invoicesTable).where(and(eq(invoicesTable.id, req.params.invoiceId), eq(invoicesTable.projectId, project.id))).returning();
+  if (!deleted) { res.status(404).json({ error: "Invoice not found" }); return; }
+  res.sendStatus(204);
 });
 
 router.patch("/projects/:projectId/contracts/:contractId", async (req, res): Promise<void> => {
@@ -905,6 +973,15 @@ router.patch("/projects/:projectId/contracts/:contractId", async (req, res): Pro
     return;
   }
   res.json(contract);
+});
+
+router.delete("/projects/:projectId/contracts/:contractId", async (req, res): Promise<void> => {
+  const project = await ownedProject(req.params.projectId, res.locals.userId as string);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  const [deleted] = await db.delete(contractsTable).where(and(eq(contractsTable.id, req.params.contractId), eq(contractsTable.projectId, project.id))).returning();
+  if (!deleted) { res.status(404).json({ error: "Contract not found" }); return; }
+  await addActivity(project.id, "Contract deleted", deleted.title);
+  res.sendStatus(204);
 });
 
 router.get("/projects/:projectId/payment-requests", async (req, res): Promise<void> => {
@@ -962,6 +1039,15 @@ router.patch("/projects/:projectId/payment-requests/:requestId", async (req, res
   res.json(request);
 });
 
+router.delete("/projects/:projectId/payment-requests/:requestId", async (req, res): Promise<void> => {
+  const params = UpdatePaymentRequestParams.safeParse(req.params);
+  const project = params.success ? await ownedProject(params.data.projectId, res.locals.userId as string) : null;
+  if (!project || !params.success) { res.status(400).json({ error: "Invalid payment request" }); return; }
+  const [deleted] = await db.delete(paymentRequestsTable).where(and(eq(paymentRequestsTable.id, params.data.requestId), eq(paymentRequestsTable.projectId, project.id))).returning();
+  if (!deleted) { res.status(404).json({ error: "Payment request not found" }); return; }
+  res.sendStatus(204);
+});
+
 router.get("/projects/:projectId/payments", async (req, res): Promise<void> => {
   const params = ListPaymentsParams.safeParse(req.params);
   const project = params.success ? await ownedProject(params.data.projectId, res.locals.userId as string) : null;
@@ -980,7 +1066,14 @@ router.post("/projects/:projectId/payments", async (req, res): Promise<void> => 
     res.status(400).json({ error: "Invalid payment" });
     return;
   }
-  const [payment] = await db.insert(paymentsTable).values({ projectId: project.id, ...body.data, mode: "TEST" }).returning();
+  const [payment] = await db.insert(paymentsTable).values({
+    projectId: project.id, ...body.data, mode: "TEST",
+    method: String(req.body?.method ?? "KNET").toUpperCase(),
+    relatedInvoiceId: req.body?.relatedInvoiceId ?? null,
+    relatedRequestId: req.body?.relatedRequestId ?? null,
+    sourceType: req.body?.sourceType ?? null,
+    sourceId: req.body?.sourceId ?? null,
+  }).returning();
   await addActivity(project.id, "Payment created", `Test payment prepared for ${payment.recipient}`);
   res.status(201).json(payment);
 });
@@ -997,10 +1090,26 @@ router.post("/projects/:projectId/payments/:paymentId/process", async (req, res)
     res.status(404).json({ error: "Payment not found" });
     return;
   }
+  if (statusOf(existing.status) === "paid") {
+    res.json(existing);
+    return;
+  }
+  await db.update(paymentsTable).set({ status: "PROCESSING" }).where(eq(paymentsTable.id, existing.id));
   const today = new Date().toISOString().slice(0, 10);
-  const [payment] = await db.update(paymentsTable).set({ status: "Paid", transactionReference: `ROLL-TEST-${Date.now().toString().slice(-6)}`, date: today }).where(eq(paymentsTable.id, existing.id)).returning();
+  const reference = existing.transactionReference ?? `ROLL-TEST-${existing.id.slice(0, 8).toUpperCase()}`;
+  const [payment] = await db.update(paymentsTable).set({ status: "PAID", transactionReference: reference, date: today }).where(eq(paymentsTable.id, existing.id)).returning();
+  await db.insert(transactionsTable).values({
+    projectId: project.id, paymentId: payment.id, reference,
+    amount: payment.amount, method: payment.method, status: "PAID",
+  }).onConflictDoNothing({ target: transactionsTable.paymentId });
   if (payment.relatedExpenseId) {
-    await db.update(expensesTable).set({ status: "Paid" }).where(eq(expensesTable.id, payment.relatedExpenseId));
+    await db.update(expensesTable).set({ status: "PAID" }).where(eq(expensesTable.id, payment.relatedExpenseId));
+  }
+  if (payment.relatedInvoiceId) {
+    await db.update(invoicesTable).set({ status: "PAID" }).where(eq(invoicesTable.id, payment.relatedInvoiceId));
+  }
+  if (payment.relatedRequestId) {
+    await db.update(paymentRequestsTable).set({ status: "PAID" }).where(eq(paymentRequestsTable.id, payment.relatedRequestId));
   }
   if (payment.relatedContractId) {
     const [contract] = await db.select().from(contractsTable).where(eq(contractsTable.id, payment.relatedContractId));
@@ -1065,6 +1174,14 @@ router.post("/projects/:projectId/assets", async (req, res): Promise<void> => {
     .returning();
   await addActivity(project.id, "Asset added", `${asset.name} added to ${asset.department}`);
   res.status(201).json(asset);
+});
+
+router.delete("/projects/:projectId/assets/:assetId", async (req, res): Promise<void> => {
+  const project = await ownedProject(req.params.projectId, res.locals.userId as string);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  const [deleted] = await db.delete(assetsTable).where(and(eq(assetsTable.id, req.params.assetId), eq(assetsTable.projectId, project.id))).returning();
+  if (!deleted) { res.status(404).json({ error: "Asset not found" }); return; }
+  res.sendStatus(204);
 });
 
 router.post("/projects/:projectId/decisions/simulate", async (req, res): Promise<void> => {
